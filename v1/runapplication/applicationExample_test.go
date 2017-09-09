@@ -1,6 +1,6 @@
 package runapplication_test
 
-import "git.oschina.net/kinwyb/golang/runapplication"
+import "github.com/kinwyb/golang/runapplication"
 
 func Example() {
 	app := &runapplication.Application{

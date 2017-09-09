@@ -13,8 +13,8 @@ import (
 	"strings"
 	"time"
 
-	"git.oschina.net/kinwyb/golang/crypto/rsautil"
-	"git.oschina.net/kinwyb/golang/utils"
+	"github.com/kinwyb/golang/crypto/rsautil"
+	"github.com/kinwyb/golang/utils"
 )
 
 //签名

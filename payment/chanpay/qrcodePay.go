@@ -7,9 +7,9 @@ import (
 
 	"fmt"
 
-	"git.oschina.net/kinwyb/golang/payment"
-	"git.oschina.net/kinwyb/golang/payment/wxpay"
-	"git.oschina.net/kinwyb/golang/utils"
+	"github.com/kinwyb/golang/payment"
+	"github.com/kinwyb/golang/payment/wxpay"
+	"github.com/kinwyb/golang/utils"
 )
 
 //畅捷二维码扫描支付

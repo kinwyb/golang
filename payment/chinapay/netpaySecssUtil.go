@@ -16,9 +16,9 @@ import (
 	"sort"
 	"strings"
 
-	"git.oschina.net/kinwyb/golang/crypto/rsautil"
-	"git.oschina.net/kinwyb/golang/gosql"
-	"git.oschina.net/kinwyb/golang/utils"
+	"github.com/kinwyb/golang/crypto/rsautil"
+	"github.com/kinwyb/golang/gosql"
+	"github.com/kinwyb/golang/utils"
 	"github.com/astaxie/beego/config"
 
 	"golang.org/x/crypto/pkcs12"

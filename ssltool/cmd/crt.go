@@ -8,7 +8,7 @@ import (
 	"net"
 	"strings"
 
-	"git.oschina.net/kinwyb/golang/ssltool"
+	"github.com/kinwyb/golang/ssltool"
 
 	"github.com/beego/bee/cmd/commands"
 )

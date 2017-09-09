@@ -7,9 +7,9 @@ import (
 	"strconv"
 	"time"
 
-	"git.oschina.net/kinwyb/golang/crypto/rsautil"
-	"git.oschina.net/kinwyb/golang/payment"
-	"git.oschina.net/kinwyb/golang/utils"
+	"github.com/kinwyb/golang/crypto/rsautil"
+	"github.com/kinwyb/golang/payment"
+	"github.com/kinwyb/golang/utils"
 )
 
 //quickPay 快捷支付

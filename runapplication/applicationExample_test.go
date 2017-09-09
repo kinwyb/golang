@@ -1,7 +1,7 @@
 package runapplication_test
 
 import (
-	"git.oschina.net/kinwyb/golang/runapplication"
+	"github.com/kinwyb/golang/runapplication"
 )
 
 func Example() {

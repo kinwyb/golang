@@ -8,7 +8,7 @@ import (
 	"errors"
 	"strings"
 
-	"git.oschina.net/kinwyb/golang/utils"
+	"github.com/kinwyb/golang/utils"
 
 	"math/big"
 

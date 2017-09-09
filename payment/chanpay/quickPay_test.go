@@ -4,8 +4,8 @@ import (
 	"encoding/base64"
 	"testing"
 
-	"git.oschina.net/kinwyb/golang/crypto/rsautil"
-	"git.oschina.net/kinwyb/golang/payment"
+	"github.com/kinwyb/golang/crypto/rsautil"
+	"github.com/kinwyb/golang/payment"
 	"github.com/astaxie/beego/logs"
 	"github.com/smartystreets/goconvey/convey"
 )

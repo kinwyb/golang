@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"git.oschina.net/kinwyb/golang/payment"
+	"github.com/kinwyb/golang/payment"
 	"github.com/astaxie/beego/logs"
 	"github.com/smartystreets/goconvey/convey"
 )

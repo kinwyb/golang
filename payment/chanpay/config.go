@@ -1,6 +1,6 @@
 package chanpay
 
-import "git.oschina.net/kinwyb/golang/payment"
+import "github.com/kinwyb/golang/payment"
 
 //QRPayConfig 畅捷二维码扫码支付配置
 //	支付请求参数PayRequest中： Ext  可空  用作表示支付方式=[WXPAY:微信渠道,ALIPAY:支付宝渠道,UNIONPAY:银联渠道]

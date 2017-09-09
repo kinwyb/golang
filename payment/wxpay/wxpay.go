@@ -11,9 +11,9 @@ import (
 	"strings"
 	"time"
 
-	"git.oschina.net/kinwyb/golang/payment"
+	"github.com/kinwyb/golang/payment"
 
-	"git.oschina.net/kinwyb/golang/utils"
+	"github.com/kinwyb/golang/utils"
 
 	"github.com/boombuler/barcode"
 	"github.com/boombuler/barcode/qr"

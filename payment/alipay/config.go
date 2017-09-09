@@ -1,6 +1,6 @@
 package alipay
 
-import "git.oschina.net/kinwyb/golang/payment"
+import "github.com/kinwyb/golang/payment"
 
 //PayConfig 支付配置信息
 type PayConfig struct {
