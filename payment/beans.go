@@ -3,6 +3,17 @@ package payment
 //RegDriverFun 驱动注入函数
 type RegDriverFun func(Driver) error
 
+//RegWithdrawDriverFun 提现驱动注入函数
+type RegWithdrawDriverFun func(WithdrawDriver) error
+
+type WithdrawStatus string
+
+const (
+	SUCCESS WithdrawStatus = "SUCCESS" //成功
+	FAIL    WithdrawStatus = "FAIL"    //失败
+	DEALING WithdrawStatus = "DEALING" //处理中
+)
+
 //WithdrawInfo 提现基本信息
 type WithdrawInfo struct {
 	TradeNo  string  //交易流水号
@@ -15,6 +26,27 @@ type WithdrawInfo struct {
 	Money    float64 //提现金额
 	Desc     string  //描述
 	People   bool    //是个人，否企业
+}
+
+//提现结果
+type WithdrawResult struct {
+	TradeNo     string         //交易流水号
+	ThridFlowNo string         //第三方交易流水号
+	CardNo      string         //收款账户
+	CertID      string         //收款人身份证号
+	Money       float64        //提现金额
+	PayTime     string         //完成时间
+	Status      WithdrawStatus //提现状态
+}
+
+//提现查询结果
+type WithdrawQueryResult struct {
+	Status      WithdrawStatus //提现状态
+	PayTime     string         //完成时间
+	TradeNo     string         //交易流水号
+	ThridFlowNo string         //第三方交易流水号
+	FailCode    string         //错误代码
+	FailMsg     string         //错误原因
 }
 
 //PayRequest 支付请求

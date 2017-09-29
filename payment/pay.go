@@ -26,8 +26,15 @@ type Driver interface {
 
 //Withdraw 提现接口
 type Withdraw interface {
-	withdraw(info *WithdrawInfo) (string, error) //提现操作,成功返回第三方交易流水,失败返回错误
-	Code() string                                //返回提现编码
-	Name() string                                //返回提现方式名称
-	Start() bool                                 //启用状态
+	Withdraw(info *WithdrawInfo) (*WithdrawResult, error) //提现操作,成功返回第三方交易流水,失败返回错误
+	QueryWithdraw(tradeno string) *WithdrawQueryResult    //查询提现交易
+	Code() string                                         //返回提现编码
+	Name() string                                         //返回提现方式名称
+	Start() bool                                          //启用状态
+}
+
+//WithdrawDriver 提现方式驱动接口
+type WithdrawDriver interface {
+	Driver() string                   //获取驱动编码
+	GetWithdraw(interface{}) Withdraw //生成一个提现对象
 }
