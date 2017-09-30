@@ -25,6 +25,7 @@ type WithdrawInfo struct {
 	City     string  //开户银行所在地区
 	Money    float64 //提现金额
 	Desc     string  //描述
+	IP       string  //提现的IP地址
 	People   bool    //是个人，否企业
 }
 

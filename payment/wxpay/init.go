@@ -19,6 +19,17 @@ func Driver(fun payment.RegDriverFun, logger utils.Logger) {
 	}
 }
 
+//WithdrawDriver 微信支付提现驱动
+func WithdrawDriver(fun payment.RegWithdrawDriverFun, logger utils.Logger) {
+	lg = logger
+	err := fun(&wxwithdraw{})
+	if err != nil {
+		log(utils.LogLevelError, "微信支付提现驱动注入......[失败]:%s", err.Error())
+	} else {
+		log(utils.LogLevelInfo, "微信支付提现驱动注入......[成功]")
+	}
+}
+
 //SetLogger 设置日志
 func SetLogger(log utils.Logger) {
 	lg = log
