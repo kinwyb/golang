@@ -1,5 +1,7 @@
 package payment
 
+import "time"
+
 //NoPayConfirmResult 无需确认支付步骤结果提示
 var NoPayConfirmResult = &PayResult{
 	Succ:   false,
@@ -26,11 +28,11 @@ type Driver interface {
 
 //Withdraw 提现接口
 type Withdraw interface {
-	Withdraw(info *WithdrawInfo) (*WithdrawResult, error) //提现操作,成功返回第三方交易流水,失败返回错误
-	QueryWithdraw(tradeno string) *WithdrawQueryResult    //查询提现交易
-	Code() string                                         //返回提现编码
-	Name() string                                         //返回提现方式名称
-	Start() bool                                          //启用状态
+	Withdraw(info *WithdrawInfo) (*WithdrawResult, error)                      //提现操作,成功返回第三方交易流水,失败返回错误
+	QueryWithdraw(tradeno string, tradeDate ...time.Time) *WithdrawQueryResult //查询提现交易
+	Code() string                                                              //返回提现编码
+	Name() string                                                              //返回提现方式名称
+	Start() bool                                                               //启用状态
 }
 
 //WithdrawDriver 提现方式驱动接口

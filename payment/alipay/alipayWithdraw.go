@@ -133,7 +133,7 @@ func (w *withdraw) Withdraw(info *payment.WithdrawInfo) (*payment.WithdrawResult
 }
 
 //根据交易单号查询提现信息
-func (w *withdraw) QueryWithdraw(tradeno string) *payment.WithdrawQueryResult {
+func (w *withdraw) QueryWithdraw(tradeno string, tradeDate ...time.Time) *payment.WithdrawQueryResult {
 	args := map[string]string{
 		"appid":       w.config.Partner,
 		"method":      "alipay.fund.trans.order.query",

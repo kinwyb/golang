@@ -12,7 +12,21 @@ const (
 	SUCCESS WithdrawStatus = "SUCCESS" //成功
 	FAIL    WithdrawStatus = "FAIL"    //失败
 	DEALING WithdrawStatus = "DEALING" //处理中
+	UNKNOW  WithdrawStatus = "UNKNOW"  //未知
 )
+
+//提现状态说明
+func WithdrawStatusMsg(status WithdrawStatus) string {
+	switch status {
+	case SUCCESS:
+		return "成功"
+	case FAIL:
+		return "失败"
+	case DEALING:
+		return "处理中"
+	}
+	return "未知"
+}
 
 //WithdrawInfo 提现基本信息
 type WithdrawInfo struct {

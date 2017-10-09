@@ -36,7 +36,7 @@ HcFfCC934zwf48i3
 	secss = &NetPaySecssUtil{}
 	Convey("银联NetPaySecssUtil工具测试", t, func() {
 		Convey("初始化控件", func() {
-			err := secss.Init(string(signKey), "zhifangw", verifyKey, "Signature,CertId", "Signature")
+			err := secss.Init(signKey, "zhifangw", []byte(verifyKey), "Signature,CertId", "Signature")
 			So(err, ShouldBeEmpty)
 			Convey("签名测试", func() {
 				ret, _ := secss.Sign(map[string]string{"reqData": "50a47df2d0c8af62864aa821362b268dfa822a84c932617eaecb49dedceaac49ad7aa530a498416677644acef01d3fbe7de3f159c2bf4cc178530d590a6d3f4f"})

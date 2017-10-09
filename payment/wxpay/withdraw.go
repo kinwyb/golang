@@ -3,6 +3,7 @@ package wxpay
 import (
 	"crypto"
 	"fmt"
+	"time"
 
 	"net/http"
 	"strings"
@@ -165,7 +166,7 @@ func (w *wxwithdraw) request(params map[string]string, apiURL string) (map[strin
 }
 
 //查询提现交易
-func (w *wxwithdraw) QueryWithdraw(tradeno string) *payment.WithdrawQueryResult {
+func (w *wxwithdraw) QueryWithdraw(tradeno string, tradeDate ...time.Time) *payment.WithdrawQueryResult {
 	params := map[string]string{
 		"mch_appid":        w.config.AppID,
 		"mchid":            w.config.MchID,

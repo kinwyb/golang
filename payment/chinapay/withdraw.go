@@ -11,16 +11,22 @@ import (
 
 	"io/ioutil"
 
+	"encoding/base64"
+
 	"github.com/kinwyb/golang/payment"
 	"github.com/kinwyb/golang/utils"
 )
 
 type withdraw struct {
 	payment.PayInfo
-	config *PayConfig
-	apiURL string
-	sess   *NetPaySecssUtil
+	config           *WithdrawConfig
+	privKey          *NetPayClient
+	pubKey           *NetPayClient
+	withdrawURL      string
+	queryWithdrawURL string
 }
+
+var time_FORMAT = "2006-01-02 15:04:05"
 
 func (w *withdraw) Withdraw(info *payment.WithdrawInfo) (*payment.WithdrawResult, error) {
 	args := map[string]string{
@@ -51,7 +57,8 @@ func (w *withdraw) Withdraw(info *payment.WithdrawInfo) (*payment.WithdrawResult
 	for k, v := range args {
 		params.Add(k, v)
 	}
-	request, err := http.NewRequest("http://sfj.chinapay.com/dac/SinPayServletUTF8", "application/x-www-form-urlencoded", strings.NewReader(params.Encode()))
+	request, err := http.NewRequest("POST", w.withdrawURL, strings.NewReader(params.Encode()))
+	request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	if err != nil {
 		log(utils.LogLevelError, "银联提现请求创建失败:%s", err.Error())
 		return nil, errors.New("请求创建异常")
@@ -75,31 +82,208 @@ func (w *withdraw) Withdraw(info *payment.WithdrawInfo) (*payment.WithdrawResult
 	if err != nil { //要检测提现是否完成
 		return nil, errors.New("银联提现结果读取异常")
 	}
-	if res["responseCode"][0] == "000" { //表示请求成功
-
+	result := map[string]string{}
+	for k, v := range res {
+		result[k] = v[0]
 	}
-	//TODO: .....
-	return nil, nil
+	chkValue := result["chkValue"]
+	delete(result, "chkValue")
+	v := w.pubKey.Verify(base64.StdEncoding.EncodeToString([]byte(GetSignStr(result))), chkValue)
+	if v {
+		res, err := url.ParseQuery(string(responseData))
+		if err != nil { //要检测提现是否完成
+			return nil, errors.New("银联提现结果读取异常")
+		}
+		result := map[string]string{}
+		for k, v := range res {
+			result[k] = v[0]
+		}
+		if result["responseCode"] == "000" { //表示请求成功
+			switch result["stat"] {
+			case "s":
+				//交易成功
+				return &payment.WithdrawResult{
+					TradeNo:     info.TradeNo,                   //交易流水号
+					ThridFlowNo: result["cpSeqId"],              //第三方交易流水号
+					CardNo:      info.CardNo,                    //收款账户
+					CertID:      info.CertID,                    //收款人身份证号
+					Money:       info.Money,                     //提现金额
+					PayTime:     time.Now().Format(time_FORMAT), //完成时间
+					Status:      payment.SUCCESS,                //提现状态
+				}, nil
+			case "2", "3", "4", "5", "7", "8":
+				return &payment.WithdrawResult{
+					TradeNo:     info.TradeNo,                   //交易流水号
+					ThridFlowNo: result["cpSeqId"],              //第三方交易流水号
+					CardNo:      info.CardNo,                    //收款账户
+					CertID:      info.CertID,                    //收款人身份证号
+					Money:       info.Money,                     //提现金额
+					PayTime:     time.Now().Format(time_FORMAT), //完成时间
+					Status:      payment.DEALING,                //提现状态
+				}, nil
+				//处理中
+			case "6", "9":
+				//交易失败
+				return &payment.WithdrawResult{
+					TradeNo:     info.TradeNo,                   //交易流水号
+					ThridFlowNo: result["cpSeqId"],              //第三方交易流水号
+					CardNo:      info.CardNo,                    //收款账户
+					CertID:      info.CertID,                    //收款人身份证号
+					Money:       info.Money,                     //提现金额
+					PayTime:     time.Now().Format(time_FORMAT), //完成时间
+					Status:      payment.FAIL,                   //提现状态
+				}, nil
+			}
+		}
+		//否则查询下交易状态返回查询的状态结果
+		qresult := w.QueryWithdraw(info.TradeNo)
+		return &payment.WithdrawResult{
+			TradeNo:     info.TradeNo,                   //交易流水号
+			ThridFlowNo: result["cpSeqId"],              //第三方交易流水号
+			CardNo:      info.CardNo,                    //收款账户
+			CertID:      info.CertID,                    //收款人身份证号
+			Money:       info.Money,                     //提现金额
+			PayTime:     time.Now().Format(time_FORMAT), //完成时间
+			Status:      qresult.Status,                 //提现状态
+		}, nil
+	} else {
+		return nil, fmt.Errorf("银联结果签名异常：%s", responseData)
+	}
 }
 
 //签名
 func (w *withdraw) sign(params map[string]string) error {
-	signer, err := w.sess.Sign(params)
-	if err != nil {
-		return errors.New("签名生成失败:" + err.Error())
-	}
-	params[w.config.SignatureField] = signer
+	signer := params["merId"] + params["merDate"] + params["merSeqId"] +
+		params["cardNo"] + params["usrName"] + params["certType"] +
+		params["certId"] + params["openBank"] + params["prov"] +
+		params["city"] + params["transAmt"] + params["purpose"] +
+		params["subBank"] + params["flag"] + params["version"] +
+		params["termType"] + params["payMode"] + params["userId"] +
+		params["userRegisterTime"] + params["userMail"] +
+		params["userMobile"] + params["diskSn"] +
+		params["mac"] + params["imei"] + params["ip"] +
+		params["coordinates"] + params["baseStationSn"] +
+		params["codeInputType"] + params["mobileForBank"] + params["desc"]
+	log(utils.LogLevelTrace, "待编码的签名字符串：%s", signer)
+	signer = base64.StdEncoding.EncodeToString([]byte(signer))
+	log(utils.LogLevelTrace, "待签名字符串:%s", signer)
+	params[w.config.SignatureField] = w.privKey.Sign(signer)
+	log(utils.LogLevelTrace, "签名结果:%s", params[w.config.SignatureField])
 	return nil
 }
 
-func (w *withdraw) QueryWithdraw(tradeno string) *payment.WithdrawQueryResult {
-	return nil
+func (w *withdraw) QueryWithdraw(tradeno string, tradeDate ...time.Time) *payment.WithdrawQueryResult {
+	if tradeDate == nil || len(tradeDate) < 1 {
+		tradeDate = []time.Time{time.Now()}
+	}
+	returnDealign := &payment.WithdrawQueryResult{
+		Status:  payment.DEALING, //提现状态
+		TradeNo: tradeno,         //交易流水号
+	}
+	version := "20090501"
+	merDate := tradeDate[0].Format("20060102")
+	signValue := w.config.MerID + merDate + tradeno + version
+	args := url.Values{
+		"merId":    []string{w.config.MerID}, //商户号
+		"merDate":  []string{merDate},        //商户日期
+		"merSeqId": []string{tradeno},        //流水号
+		"version":  []string{version},
+		"signFlag": []string{"1"},
+		"chkValue": []string{w.privKey.Sign(base64.StdEncoding.EncodeToString([]byte(signValue)))},
+	}
+	request, err := http.NewRequest("POST", w.queryWithdrawURL, strings.NewReader(args.Encode()))
+	request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	if err != nil {
+		log(utils.LogLevelError, "银联提现查询请求创建失败:%s", err.Error())
+		return returnDealign
+	}
+	client := http.Client{
+		Timeout: 1 * time.Minute,
+	}
+	response, err := client.Do(request)
+	if err != nil {
+		log(utils.LogLevelError, "银联提现查询请求失败:%s", err.Error())
+		return returnDealign
+	}
+	responseData, err := ioutil.ReadAll(response.Body)
+	response.Body.Close()
+	if err != nil {
+		log(utils.LogLevelError, "银联提现查询请求结果读取失败:%s", err.Error())
+		return returnDealign
+	}
+	log(utils.LogLevelInfo, "银联提现查询请求结果:%s", responseData)
+	responseString := string(responseData)
+	result := strings.Split(responseString, "|")
+	v := w.pubKey.Verify(base64.StdEncoding.EncodeToString([]byte(strings.Join(result[:len(result)-1], "|")+"|")), result[len(result)-1])
+	if !v {
+		log(utils.LogLevelError, "银联提现查询结果验签失败:%s", responseString)
+		return returnDealign
+	}
+	if result[0] == "000" {
+		if len(result) > 14 {
+			switch result[14] {
+			case "s":
+				//交易成功
+				return &payment.WithdrawQueryResult{
+					Status:      payment.SUCCESS,                //提现状态
+					PayTime:     time.Now().Format(time_FORMAT), //完成时间
+					TradeNo:     tradeno,                        //交易流水号
+					ThridFlowNo: result[5],                      //第三方交易流水号
+				}
+			case "2", "3", "4", "5", "7", "8":
+				return returnDealign
+				//处理中
+			case "6", "9":
+				//交易失败
+				ret := &payment.WithdrawQueryResult{
+					TradeNo:  tradeno,      //交易流水号
+					Status:   payment.FAIL, //提现状态
+					FailCode: "-1",         //TODO: 银联查询接口无法获取失败原因
+					FailMsg:  "银行退单",
+				}
+				return ret
+			}
+		}
+	}
+	//TODO： result[0] == "001" 表示没有交易记录如何处理？是否直接标记为失败，以便用户可以再次发起申请
+	return returnDealign
 }
 
 func (w *withdraw) Driver() string {
 	return "chinapay"
 }
 
-func (w *withdraw) GetWithdraw(interface{}) payment.Withdraw {
-	return nil
+func (w *withdraw) GetWithdraw(cfg interface{}) payment.Withdraw {
+	var conf *WithdrawConfig
+	ok := false
+	if conf, ok = cfg.(*WithdrawConfig); !ok || w == nil {
+		log(utils.LogLevelWarn, "传递的配置信息不是一个有效的银联提现配置")
+		return nil
+	}
+	if conf.SignInvalidFields == "" {
+		conf.SignInvalidFields = "chkValue"
+	}
+	if conf.SignatureField == "" {
+		conf.SignatureField = "chkValue"
+	}
+	obj := &withdraw{
+		config:           conf,
+		withdrawURL:      "http://sfj.chinapay.com/dac/SinPayServletUTF8",
+		queryWithdrawURL: "http://sfj.chinapay.com/dac/SinPayQueryServletUTF8",
+	}
+	if conf.TestMode {
+		obj.withdrawURL = "http://sfj-test.chinapay.com/dac/SinPayServletUTF8"
+		obj.queryWithdrawURL = "http://sfj-test.chinapay.com/dac/SinPayQueryServletUTF8"
+	}
+	v, err := BuildNetPayClientKey(conf.PrivateKey)
+	if err != nil {
+		log(utils.LogLevelError, "私钥初始化失败:%s", err.Error())
+	}
+	obj.privKey = v
+	obj.pubKey, err = BuildNetPayClientKey(conf.PublicKey)
+	if err != nil {
+		log(utils.LogLevelError, "公钥初始化失败:%s", err.Error())
+	}
+	obj.Init(obj.config.Code, obj.config.Name, obj.config.State)
+	return obj
 }

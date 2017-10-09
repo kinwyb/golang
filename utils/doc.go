@@ -49,3 +49,12 @@ func GBK2UTF8(str string) string {
 	}
 	return string(ret)
 }
+
+//UTF8转GBK编码
+func UTF82GBK(str string) []byte {
+	data, err := ioutil.ReadAll(transform.NewReader(bytes.NewReader([]byte(str)), simplifiedchinese.GB18030.NewEncoder()))
+	if err != nil {
+		return []byte(str)
+	}
+	return data
+}

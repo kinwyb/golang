@@ -12,6 +12,9 @@ import (
 
 	"math/big"
 
+	"bytes"
+	"sort"
+
 	"github.com/astaxie/beego/config"
 )
 
@@ -32,18 +35,18 @@ type netPayKey struct {
 	coefficient    string
 }
 
-//netPayClient
-type netPayClient struct {
+//NetPayClient
+type NetPayClient struct {
 	key *netPayKey
 }
 
-func (n *netPayClient) sha1_128(str string) string {
+func (n *NetPayClient) sha1_128(str string) string {
 	hash := sha1.Sum([]byte(str))
 	return hex2bin(hashPAD) + hex2bin(hex.EncodeToString(hash[:]))
 }
 
-func buildNetPayClientKeyFile(keypath string) (*netPayClient, error) {
-	client := &netPayClient{}
+func BuildNetPayClientKeyFile(keypath string) (*NetPayClient, error) {
+	client := &NetPayClient{}
 	cfg, err := config.NewConfig("ini", keypath)
 	if err != nil {
 		return nil, errors.New("配置数据解析失败:" + err.Error())
@@ -54,9 +57,9 @@ func buildNetPayClientKeyFile(keypath string) (*netPayClient, error) {
 	return nil, nil
 }
 
-func buildNetPayClientKey(key string) (*netPayClient, error) {
-	client := &netPayClient{}
-	cfg, err := config.NewConfigData("ini", []byte(key))
+func BuildNetPayClientKey(key []byte) (*NetPayClient, error) {
+	client := &NetPayClient{}
+	cfg, err := config.NewConfigData("ini", key)
 	if err != nil {
 		return nil, errors.New("配置数据解析失败:" + err.Error())
 	}
@@ -66,7 +69,7 @@ func buildNetPayClientKey(key string) (*netPayClient, error) {
 	return nil, nil
 }
 
-func (n *netPayClient) rsaEncrypt(input string) string {
+func (n *NetPayClient) rsaEncrypt(input string) string {
 	p := bin2int(n.key.prime1)
 	q := bin2int(n.key.prime2)
 	u := bin2int(n.key.coefficient)
@@ -99,7 +102,7 @@ func (n *netPayClient) rsaEncrypt(input string) string {
 	return ""
 }
 
-func (n *netPayClient) rsaDecrypt(input string) string {
+func (n *NetPayClient) rsaDecrypt(input string) string {
 	check := bchexdec(input)
 	modulus := bin2int(n.key.modulus)
 	exponent := bchexdec("010001")
@@ -109,7 +112,7 @@ func (n *netPayClient) rsaDecrypt(input string) string {
 	return strings.ToUpper(padstr(ret))
 }
 
-func (n *netPayClient) buildKey(cfg config.Configer) bool {
+func (n *NetPayClient) buildKey(cfg config.Configer) bool {
 	merID := cfg.String("NetPayClient::MERID")
 	pgID := cfg.String("NetPayClient::PGID")
 	if merID != "" {
@@ -176,7 +179,7 @@ func (n *netPayClient) buildKey(cfg config.Configer) bool {
 	return true
 }
 
-func (n *netPayClient) sign(msg string) string {
+func (n *NetPayClient) Sign(msg string) string {
 	if n.key == nil || n.key.merID == "" {
 		return ""
 	}
@@ -184,7 +187,7 @@ func (n *netPayClient) sign(msg string) string {
 	return n.rsaEncrypt(hb)
 }
 
-func (n *netPayClient) verify(plain, check string) bool {
+func (n *NetPayClient) Verify(plain, check string) bool {
 	if n.key == nil || n.key.pgID == "" {
 		return false
 	} else if len(check) != 256 {
@@ -194,4 +197,23 @@ func (n *netPayClient) verify(plain, check string) bool {
 	hbhex := strings.ToUpper(bin2hex(hb))
 	rbhex := n.rsaDecrypt(check)
 	return rbhex == hbhex
+}
+
+func GetSignStr(params map[string]string) string {
+	keys := []string{}
+	for k := range params {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	bf := &bytes.Buffer{}
+	for _, k := range keys {
+		bf.WriteString(k)
+		bf.WriteString(netPaySecss_CP_KEY_VALUE_CONNECT)
+		bf.WriteString(params[k])
+		bf.WriteString(netPaySecss_CP_MESSAGE_CONNECT)
+	}
+	if bf.Len() > 0 {
+		bf.Truncate(bf.Len() - 1)
+	}
+	return bf.String()
 }
