@@ -29,7 +29,7 @@ type wxwithdraw struct {
 
 //获取驱动编码
 func (w *wxwithdraw) Driver() string {
-	return "wxwithdraw"
+	return "wxpay"
 }
 
 //生成一个提现对象
@@ -90,12 +90,15 @@ func (w *wxwithdraw) Withdraw(info *payment.WithdrawInfo) (*payment.WithdrawResu
 	if result["return_code"] == "SUCCESS" {
 		if result["result_code"] == "SUCCESS" {
 			return &payment.WithdrawResult{
-				TradeNo:     info.TradeNo,
-				ThridFlowNo: result["payment_no"],
-				CardNo:      info.CardNo,
-				CertID:      info.CertID,
-				Money:       info.Money,
-				Status:      payment.SUCCESS,
+				TradeNo:      info.TradeNo,
+				ThridFlowNo:  result["payment_no"],
+				CardNo:       info.CardNo,
+				CertID:       info.CertID,
+				Money:        info.Money,
+				UserName:     info.UserName,
+				WithdrawCode: w.Code(),
+				PayTime:      time.Now().Format("2006-01-02 15:04:05"),
+				Status:       payment.SUCCESS,
 			}, nil
 		} else if result["err_code"] == "SYSTEMERROR" { //请求结果提示业务繁忙的,调用查询接口确认一下业务是否真实失败
 			return w.withdrawCheckResult(info)
@@ -112,20 +115,26 @@ func (w *wxwithdraw) withdrawCheckResult(info *payment.WithdrawInfo) (*payment.W
 	res := w.QueryWithdraw(info.TradeNo)
 	if res.Status == payment.SUCCESS {
 		return &payment.WithdrawResult{
-			TradeNo:     info.TradeNo,
-			ThridFlowNo: res.ThridFlowNo,
-			CardNo:      info.CardNo,
-			CertID:      info.CertID,
-			Money:       info.Money,
-			Status:      payment.SUCCESS,
+			TradeNo:      info.TradeNo,
+			ThridFlowNo:  res.ThridFlowNo,
+			CardNo:       info.CardNo,
+			CertID:       info.CertID,
+			Money:        info.Money,
+			UserName:     info.UserName,
+			WithdrawCode: w.Code(),
+			PayTime:      time.Now().Format("2006-01-02 15:04:05"),
+			Status:       payment.SUCCESS,
 		}, nil
 	} else if res.Status == payment.DEALING {
 		return &payment.WithdrawResult{
-			TradeNo: info.TradeNo,
-			CardNo:  info.CardNo,
-			CertID:  info.CertID,
-			Money:   info.Money,
-			Status:  payment.DEALING,
+			TradeNo:      info.TradeNo,
+			CardNo:       info.CardNo,
+			CertID:       info.CertID,
+			Money:        info.Money,
+			UserName:     info.UserName,
+			WithdrawCode: w.Code(),
+			PayTime:      time.Now().Format("2006-01-02 15:04:05"),
+			Status:       payment.DEALING,
 		}, nil
 	}
 	log(utils.LogLevelError, "微信提现失败[%s]:%s", res.FailCode, res.FailMsg)

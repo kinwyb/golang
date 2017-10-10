@@ -81,11 +81,13 @@ func (w *withdraw) Withdraw(info *payment.WithdrawInfo) (*payment.WithdrawResult
 	if w.verify(vmap) {
 		log(utils.LogLevelError, "支付宝提现请求结果签名验证异常:%v", vmap)
 		return &payment.WithdrawResult{
-			TradeNo: info.TradeNo,
-			CardNo:  info.CardNo,
-			CertID:  info.CertID,
-			Money:   info.Money,
-			Status:  payment.DEALING,
+			TradeNo:      info.TradeNo,
+			CardNo:       info.CardNo,
+			CertID:       info.CertID,
+			Money:        info.Money,
+			UserName:     info.UserName,
+			WithdrawCode: w.Code(),
+			Status:       payment.DEALING,
 		}, nil
 	}
 	response := &withdrawAPIResponse{}
@@ -95,13 +97,15 @@ func (w *withdraw) Withdraw(info *payment.WithdrawInfo) (*payment.WithdrawResult
 	}
 	if response.Code == "10000" {
 		return &payment.WithdrawResult{
-			TradeNo:     response.OutBizNo,
-			ThridFlowNo: response.OrderID,
-			CardNo:      info.CardNo,
-			CertID:      info.CertID,
-			Money:       info.Money,
-			PayTime:     response.PayDate,
-			Status:      payment.SUCCESS,
+			TradeNo:      response.OutBizNo,
+			ThridFlowNo:  response.OrderID,
+			CardNo:       info.CardNo,
+			CertID:       info.CertID,
+			Money:        info.Money,
+			PayTime:      response.PayDate,
+			UserName:     info.UserName,
+			WithdrawCode: w.Code(),
+			Status:       payment.SUCCESS,
 		}, nil
 	} else if response.SubCode == "SYSTEM_ERROR" { //请求结果提示业务繁忙的,调用查询接口确认一下业务是否真实失败
 		qret := w.QueryWithdraw(info.TradeNo)
@@ -109,23 +113,27 @@ func (w *withdraw) Withdraw(info *payment.WithdrawInfo) (*payment.WithdrawResult
 			return nil, fmt.Errorf("提现失败[%s]:%s", qret.FailCode, qret.FailMsg)
 		} else if qret.Status == payment.SUCCESS { //查询出来是成功的返回成功
 			return &payment.WithdrawResult{
-				TradeNo:     response.OutBizNo,
-				ThridFlowNo: qret.ThridFlowNo,
-				CardNo:      info.CardNo,
-				CertID:      info.CertID,
-				Money:       info.Money,
-				PayTime:     response.PayDate,
-				Status:      payment.SUCCESS,
+				TradeNo:      response.OutBizNo,
+				ThridFlowNo:  qret.ThridFlowNo,
+				CardNo:       info.CardNo,
+				CertID:       info.CertID,
+				Money:        info.Money,
+				PayTime:      response.PayDate,
+				UserName:     info.UserName,
+				WithdrawCode: w.Code(),
+				Status:       payment.SUCCESS,
 			}, nil
 		} else { //处理中的返回处理中
 			return &payment.WithdrawResult{
-				TradeNo:     response.OutBizNo,
-				ThridFlowNo: qret.ThridFlowNo,
-				CardNo:      info.CardNo,
-				CertID:      info.CertID,
-				Money:       info.Money,
-				PayTime:     response.PayDate,
-				Status:      payment.DEALING,
+				TradeNo:      response.OutBizNo,
+				ThridFlowNo:  qret.ThridFlowNo,
+				CardNo:       info.CardNo,
+				CertID:       info.CertID,
+				Money:        info.Money,
+				PayTime:      response.PayDate,
+				UserName:     info.UserName,
+				WithdrawCode: w.Code(),
+				Status:       payment.DEALING,
 			}, nil
 		}
 	}

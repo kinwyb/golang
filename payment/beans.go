@@ -6,17 +6,17 @@ type RegDriverFun func(Driver) error
 //RegWithdrawDriverFun 提现驱动注入函数
 type RegWithdrawDriverFun func(WithdrawDriver) error
 
-type WithdrawStatus string
+type Status string
 
 const (
-	SUCCESS WithdrawStatus = "SUCCESS" //成功
-	FAIL    WithdrawStatus = "FAIL"    //失败
-	DEALING WithdrawStatus = "DEALING" //处理中
-	UNKNOW  WithdrawStatus = "UNKNOW"  //未知
+	SUCCESS Status = "SUCCESS" //成功
+	FAIL    Status = "FAIL"    //失败
+	DEALING Status = "DEALING" //处理中
+	UNKNOW  Status = "UNKNOW"  //未知
 )
 
-//提现状态说明
-func WithdrawStatusMsg(status WithdrawStatus) string {
+//交易状态说明
+func StatusMsg(status Status) string {
 	switch status {
 	case SUCCESS:
 		return "成功"
@@ -30,38 +30,41 @@ func WithdrawStatusMsg(status WithdrawStatus) string {
 
 //WithdrawInfo 提现基本信息
 type WithdrawInfo struct {
-	TradeNo  string  //交易流水号
-	UserName string  //收款人姓名
-	CardNo   string  //收款账户
-	CertID   string  //收款人身份证号
-	OpenBank string  //开户银行名称
-	Prov     string  //开户银行所在省份
-	City     string  //开户银行所在地区
-	Money    float64 //提现金额
-	Desc     string  //描述
-	IP       string  //提现的IP地址
-	People   bool    //是个人，否企业
+	TradeNo  string  `description:"交易流水号"`
+	UserName string  `description:"收款人姓名"`
+	CardNo   string  `description:"收款账户"`
+	CertID   string  `description:"收款人身份证号"`
+	OpenBank string  `description:"开户银行名称"`
+	Prov     string  `description:"开户银行所在省份"`
+	City     string  `description:"开户银行所在地区"`
+	Money    float64 `description:"提现金额"`
+	Desc     string  `description:"描述"`
+	IP       string  `description:"提现的IP地址"`
+	People   bool    `description:"是个人，否企业"`
 }
 
 //提现结果
 type WithdrawResult struct {
-	TradeNo     string         //交易流水号
-	ThridFlowNo string         //第三方交易流水号
-	CardNo      string         //收款账户
-	CertID      string         //收款人身份证号
-	Money       float64        //提现金额
-	PayTime     string         //完成时间
-	Status      WithdrawStatus //提现状态
+	AppID        int     `description:"发起提现的应用编码"`
+	WithdrawCode string  `description:"提现方式编码"`
+	TradeNo      string  `description:"交易流水号"`
+	ThridFlowNo  string  `description:"第三方交易流水号"`
+	CardNo       string  `description:"收款账户"`
+	UserName     string  `description:"收款人姓名"`
+	CertID       string  `description:"收款人身份证号"`
+	Money        float64 `description:"提现金额"`
+	PayTime      string  `description:"完成时间"`
+	Status       Status  `description:"提现状态"`
 }
 
 //提现查询结果
 type WithdrawQueryResult struct {
-	Status      WithdrawStatus //提现状态
-	PayTime     string         //完成时间
-	TradeNo     string         //交易流水号
-	ThridFlowNo string         //第三方交易流水号
-	FailCode    string         //错误代码
-	FailMsg     string         //错误原因
+	Status      Status //提现状态
+	PayTime     string //完成时间
+	TradeNo     string //交易流水号
+	ThridFlowNo string //第三方交易流水号
+	FailCode    string //错误代码
+	FailMsg     string //错误原因
 }
 
 //PayRequest 支付请求

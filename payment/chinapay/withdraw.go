@@ -13,6 +13,8 @@ import (
 
 	"encoding/base64"
 
+	"regexp"
+
 	"github.com/kinwyb/golang/payment"
 	"github.com/kinwyb/golang/utils"
 )
@@ -29,6 +31,12 @@ type withdraw struct {
 var time_FORMAT = "2006-01-02 15:04:05"
 
 func (w *withdraw) Withdraw(info *payment.WithdrawInfo) (*payment.WithdrawResult, error) {
+	pa, err := regexp.Compile("\\d{1,16}")
+	if err != nil {
+		return nil, err
+	} else if !pa.MatchString(info.TradeNo) {
+		return nil, fmt.Errorf("交易单号必须市小于16位的纯数字")
+	}
 	args := map[string]string{
 		"merId":    w.config.MerID,                //商户号
 		"merDate":  time.Now().Format("20060102"), //商户日期
@@ -78,7 +86,9 @@ func (w *withdraw) Withdraw(info *payment.WithdrawInfo) (*payment.WithdrawResult
 		return nil, errors.New("请求结果读取异常")
 	}
 	log(utils.LogLevelInfo, "银联提现请求结果:%s", responseData)
-	res, err := url.ParseQuery(string(responseData))
+	responseString := string(responseData)
+	idex := strings.LastIndex(responseString, "&")
+	res, err := url.ParseQuery(responseString)
 	if err != nil { //要检测提现是否完成
 		return nil, errors.New("银联提现结果读取异常")
 	}
@@ -86,69 +96,68 @@ func (w *withdraw) Withdraw(info *payment.WithdrawInfo) (*payment.WithdrawResult
 	for k, v := range res {
 		result[k] = v[0]
 	}
-	chkValue := result["chkValue"]
-	delete(result, "chkValue")
-	v := w.pubKey.Verify(base64.StdEncoding.EncodeToString([]byte(GetSignStr(result))), chkValue)
-	if v {
-		res, err := url.ParseQuery(string(responseData))
-		if err != nil { //要检测提现是否完成
-			return nil, errors.New("银联提现结果读取异常")
+	if result["responseCode"] == "000" { //表示请求成功 应答失败时候检测会发生异常
+		v := w.pubKey.Verify(base64.StdEncoding.EncodeToString([]byte(responseString[:idex])), responseString[idex+10:])
+		if !v {
+			log(utils.LogLevelError, "银联结果签名异常=>[%s]\n等待签名base64结果:%s\n签名:%s",
+				responseString[:idex], base64.StdEncoding.EncodeToString([]byte(responseString[:idex])), responseString[idex+10:])
+			return nil, fmt.Errorf("银联结果签名异常：%s", responseData)
 		}
-		result := map[string]string{}
-		for k, v := range res {
-			result[k] = v[0]
+		switch result["stat"] {
+		case "s":
+			//交易成功
+			return &payment.WithdrawResult{
+				TradeNo:      info.TradeNo,                   //交易流水号
+				ThridFlowNo:  result["cpSeqId"],              //第三方交易流水号
+				CardNo:       info.CardNo,                    //收款账户
+				CertID:       info.CertID,                    //收款人身份证号
+				Money:        info.Money,                     //提现金额
+				PayTime:      time.Now().Format(time_FORMAT), //完成时间
+				UserName:     info.UserName,
+				WithdrawCode: w.Code(),
+				Status:       payment.SUCCESS, //提现状态
+			}, nil
+		case "2", "3", "4", "5", "7", "8":
+			return &payment.WithdrawResult{
+				TradeNo:      info.TradeNo,                   //交易流水号
+				ThridFlowNo:  result["cpSeqId"],              //第三方交易流水号
+				CardNo:       info.CardNo,                    //收款账户
+				CertID:       info.CertID,                    //收款人身份证号
+				Money:        info.Money,                     //提现金额
+				PayTime:      time.Now().Format(time_FORMAT), //完成时间
+				UserName:     info.UserName,
+				WithdrawCode: w.Code(),
+				Status:       payment.DEALING, //提现状态
+			}, nil
+			//处理中
+		case "6", "9":
+			//交易失败
+			return &payment.WithdrawResult{
+				TradeNo:      info.TradeNo,                   //交易流水号
+				ThridFlowNo:  result["cpSeqId"],              //第三方交易流水号
+				CardNo:       info.CardNo,                    //收款账户
+				CertID:       info.CertID,                    //收款人身份证号
+				Money:        info.Money,                     //提现金额
+				PayTime:      time.Now().Format(time_FORMAT), //完成时间
+				UserName:     info.UserName,
+				WithdrawCode: w.Code(),
+				Status:       payment.FAIL, //提现状态
+			}, nil
 		}
-		if result["responseCode"] == "000" { //表示请求成功
-			switch result["stat"] {
-			case "s":
-				//交易成功
-				return &payment.WithdrawResult{
-					TradeNo:     info.TradeNo,                   //交易流水号
-					ThridFlowNo: result["cpSeqId"],              //第三方交易流水号
-					CardNo:      info.CardNo,                    //收款账户
-					CertID:      info.CertID,                    //收款人身份证号
-					Money:       info.Money,                     //提现金额
-					PayTime:     time.Now().Format(time_FORMAT), //完成时间
-					Status:      payment.SUCCESS,                //提现状态
-				}, nil
-			case "2", "3", "4", "5", "7", "8":
-				return &payment.WithdrawResult{
-					TradeNo:     info.TradeNo,                   //交易流水号
-					ThridFlowNo: result["cpSeqId"],              //第三方交易流水号
-					CardNo:      info.CardNo,                    //收款账户
-					CertID:      info.CertID,                    //收款人身份证号
-					Money:       info.Money,                     //提现金额
-					PayTime:     time.Now().Format(time_FORMAT), //完成时间
-					Status:      payment.DEALING,                //提现状态
-				}, nil
-				//处理中
-			case "6", "9":
-				//交易失败
-				return &payment.WithdrawResult{
-					TradeNo:     info.TradeNo,                   //交易流水号
-					ThridFlowNo: result["cpSeqId"],              //第三方交易流水号
-					CardNo:      info.CardNo,                    //收款账户
-					CertID:      info.CertID,                    //收款人身份证号
-					Money:       info.Money,                     //提现金额
-					PayTime:     time.Now().Format(time_FORMAT), //完成时间
-					Status:      payment.FAIL,                   //提现状态
-				}, nil
-			}
-		}
-		//否则查询下交易状态返回查询的状态结果
-		qresult := w.QueryWithdraw(info.TradeNo)
-		return &payment.WithdrawResult{
-			TradeNo:     info.TradeNo,                   //交易流水号
-			ThridFlowNo: result["cpSeqId"],              //第三方交易流水号
-			CardNo:      info.CardNo,                    //收款账户
-			CertID:      info.CertID,                    //收款人身份证号
-			Money:       info.Money,                     //提现金额
-			PayTime:     time.Now().Format(time_FORMAT), //完成时间
-			Status:      qresult.Status,                 //提现状态
-		}, nil
-	} else {
-		return nil, fmt.Errorf("银联结果签名异常：%s", responseData)
 	}
+	//否则查询下交易状态返回查询的状态结果
+	qresult := w.QueryWithdraw(info.TradeNo)
+	return &payment.WithdrawResult{
+		TradeNo:      info.TradeNo,                   //交易流水号
+		ThridFlowNo:  result["cpSeqId"],              //第三方交易流水号
+		CardNo:       info.CardNo,                    //收款账户
+		CertID:       info.CertID,                    //收款人身份证号
+		Money:        info.Money,                     //提现金额
+		PayTime:      time.Now().Format(time_FORMAT), //完成时间
+		UserName:     info.UserName,
+		WithdrawCode: w.Code(),
+		Status:       qresult.Status, //提现状态
+	}, nil
 }
 
 //签名
@@ -259,9 +268,6 @@ func (w *withdraw) GetWithdraw(cfg interface{}) payment.Withdraw {
 	if conf, ok = cfg.(*WithdrawConfig); !ok || w == nil {
 		log(utils.LogLevelWarn, "传递的配置信息不是一个有效的银联提现配置")
 		return nil
-	}
-	if conf.SignInvalidFields == "" {
-		conf.SignInvalidFields = "chkValue"
 	}
 	if conf.SignatureField == "" {
 		conf.SignatureField = "chkValue"

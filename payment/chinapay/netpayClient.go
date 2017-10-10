@@ -51,7 +51,7 @@ func BuildNetPayClientKeyFile(keypath string) (*NetPayClient, error) {
 	if err != nil {
 		return nil, errors.New("配置数据解析失败:" + err.Error())
 	}
-	if client.buildKey(cfg) {
+	if client.BuildKey(cfg) {
 		return client, nil
 	}
 	return nil, nil
@@ -63,7 +63,7 @@ func BuildNetPayClientKey(key []byte) (*NetPayClient, error) {
 	if err != nil {
 		return nil, errors.New("配置数据解析失败:" + err.Error())
 	}
-	if client.buildKey(cfg) {
+	if client.BuildKey(cfg) {
 		return client, nil
 	}
 	return nil, nil
@@ -112,7 +112,7 @@ func (n *NetPayClient) rsaDecrypt(input string) string {
 	return strings.ToUpper(padstr(ret))
 }
 
-func (n *NetPayClient) buildKey(cfg config.Configer) bool {
+func (n *NetPayClient) BuildKey(cfg config.Configer) bool {
 	merID := cfg.String("NetPayClient::MERID")
 	pgID := cfg.String("NetPayClient::PGID")
 	if merID != "" {
