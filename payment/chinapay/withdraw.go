@@ -115,6 +115,7 @@ func (w *withdraw) Withdraw(info *payment.WithdrawInfo) (*payment.WithdrawResult
 				PayTime:      time.Now().Format(time_FORMAT), //完成时间
 				UserName:     info.UserName,
 				WithdrawCode: w.Code(),
+				WithdrawName: w.Name(),
 				Status:       payment.SUCCESS, //提现状态
 			}, nil
 		case "2", "3", "4", "5", "7", "8":
@@ -127,6 +128,7 @@ func (w *withdraw) Withdraw(info *payment.WithdrawInfo) (*payment.WithdrawResult
 				PayTime:      time.Now().Format(time_FORMAT), //完成时间
 				UserName:     info.UserName,
 				WithdrawCode: w.Code(),
+				WithdrawName: w.Name(),
 				Status:       payment.DEALING, //提现状态
 			}, nil
 			//处理中
@@ -141,6 +143,7 @@ func (w *withdraw) Withdraw(info *payment.WithdrawInfo) (*payment.WithdrawResult
 				PayTime:      time.Now().Format(time_FORMAT), //完成时间
 				UserName:     info.UserName,
 				WithdrawCode: w.Code(),
+				WithdrawName: w.Name(),
 				Status:       payment.FAIL, //提现状态
 			}, nil
 		}
@@ -156,6 +159,7 @@ func (w *withdraw) Withdraw(info *payment.WithdrawInfo) (*payment.WithdrawResult
 		PayTime:      time.Now().Format(time_FORMAT), //完成时间
 		UserName:     info.UserName,
 		WithdrawCode: w.Code(),
+		WithdrawName: w.Name(),
 		Status:       qresult.Status, //提现状态
 	}, nil
 }

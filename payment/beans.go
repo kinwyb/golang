@@ -47,6 +47,7 @@ type WithdrawInfo struct {
 type WithdrawResult struct {
 	AppID        int     `description:"发起提现的应用编码"`
 	WithdrawCode string  `description:"提现方式编码"`
+	WithdrawName string  `description:"提现方式名称"`
 	TradeNo      string  `description:"交易流水号"`
 	ThridFlowNo  string  `description:"第三方交易流水号"`
 	CardNo       string  `description:"收款账户"`

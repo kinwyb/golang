@@ -3070,8 +3070,12 @@ func (j *WithdrawResult) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 	var obj []byte
 	_ = obj
 	_ = err
-	buf.WriteString(`{"WithdrawCode":`)
+	buf.WriteString(`{"AppID":`)
+	fflib.FormatBits2(buf, uint64(j.AppID), 10, j.AppID < 0)
+	buf.WriteString(`,"WithdrawCode":`)
 	fflib.WriteJsonString(buf, string(j.WithdrawCode))
+	buf.WriteString(`,"WithdrawName":`)
+	fflib.WriteJsonString(buf, string(j.WithdrawName))
 	buf.WriteString(`,"TradeNo":`)
 	fflib.WriteJsonString(buf, string(j.TradeNo))
 	buf.WriteString(`,"ThridFlowNo":`)
@@ -3096,7 +3100,11 @@ const (
 	ffjtWithdrawResultbase = iota
 	ffjtWithdrawResultnosuchkey
 
+	ffjtWithdrawResultAppID
+
 	ffjtWithdrawResultWithdrawCode
+
+	ffjtWithdrawResultWithdrawName
 
 	ffjtWithdrawResultTradeNo
 
@@ -3115,7 +3123,11 @@ const (
 	ffjtWithdrawResultStatus
 )
 
+var ffjKeyWithdrawResultAppID = []byte("AppID")
+
 var ffjKeyWithdrawResultWithdrawCode = []byte("WithdrawCode")
+
+var ffjKeyWithdrawResultWithdrawName = []byte("WithdrawName")
 
 var ffjKeyWithdrawResultTradeNo = []byte("TradeNo")
 
@@ -3194,6 +3206,14 @@ mainparse:
 			} else {
 				switch kn[0] {
 
+				case 'A':
+
+					if bytes.Equal(ffjKeyWithdrawResultAppID, kn) {
+						currentKey = ffjtWithdrawResultAppID
+						state = fflib.FFParse_want_colon
+						goto mainparse
+					}
+
 				case 'C':
 
 					if bytes.Equal(ffjKeyWithdrawResultCardNo, kn) {
@@ -3258,6 +3278,11 @@ mainparse:
 						currentKey = ffjtWithdrawResultWithdrawCode
 						state = fflib.FFParse_want_colon
 						goto mainparse
+
+					} else if bytes.Equal(ffjKeyWithdrawResultWithdrawName, kn) {
+						currentKey = ffjtWithdrawResultWithdrawName
+						state = fflib.FFParse_want_colon
+						goto mainparse
 					}
 
 				}
@@ -3310,8 +3335,20 @@ mainparse:
 					goto mainparse
 				}
 
+				if fflib.SimpleLetterEqualFold(ffjKeyWithdrawResultWithdrawName, kn) {
+					currentKey = ffjtWithdrawResultWithdrawName
+					state = fflib.FFParse_want_colon
+					goto mainparse
+				}
+
 				if fflib.SimpleLetterEqualFold(ffjKeyWithdrawResultWithdrawCode, kn) {
 					currentKey = ffjtWithdrawResultWithdrawCode
+					state = fflib.FFParse_want_colon
+					goto mainparse
+				}
+
+				if fflib.SimpleLetterEqualFold(ffjKeyWithdrawResultAppID, kn) {
+					currentKey = ffjtWithdrawResultAppID
 					state = fflib.FFParse_want_colon
 					goto mainparse
 				}
@@ -3333,8 +3370,14 @@ mainparse:
 			if tok == fflib.FFTok_left_brace || tok == fflib.FFTok_left_bracket || tok == fflib.FFTok_integer || tok == fflib.FFTok_double || tok == fflib.FFTok_string || tok == fflib.FFTok_bool || tok == fflib.FFTok_null {
 				switch currentKey {
 
+				case ffjtWithdrawResultAppID:
+					goto handle_AppID
+
 				case ffjtWithdrawResultWithdrawCode:
 					goto handle_WithdrawCode
+
+				case ffjtWithdrawResultWithdrawName:
+					goto handle_WithdrawName
 
 				case ffjtWithdrawResultTradeNo:
 					goto handle_TradeNo
@@ -3374,6 +3417,36 @@ mainparse:
 		}
 	}
 
+handle_AppID:
+
+	/* handler: j.AppID type=int kind=int quoted=false*/
+
+	{
+		if tok != fflib.FFTok_integer && tok != fflib.FFTok_null {
+			return fs.WrapErr(fmt.Errorf("cannot unmarshal %s into Go value for int", tok))
+		}
+	}
+
+	{
+
+		if tok == fflib.FFTok_null {
+
+		} else {
+
+			tval, err := fflib.ParseInt(fs.Output.Bytes(), 10, 64)
+
+			if err != nil {
+				return fs.WrapErr(err)
+			}
+
+			j.AppID = int(tval)
+
+		}
+	}
+
+	state = fflib.FFParse_after_value
+	goto mainparse
+
 handle_WithdrawCode:
 
 	/* handler: j.WithdrawCode type=string kind=string quoted=false*/
@@ -3393,6 +3466,32 @@ handle_WithdrawCode:
 			outBuf := fs.Output.Bytes()
 
 			j.WithdrawCode = string(string(outBuf))
+
+		}
+	}
+
+	state = fflib.FFParse_after_value
+	goto mainparse
+
+handle_WithdrawName:
+
+	/* handler: j.WithdrawName type=string kind=string quoted=false*/
+
+	{
+
+		{
+			if tok != fflib.FFTok_string && tok != fflib.FFTok_null {
+				return fs.WrapErr(fmt.Errorf("cannot unmarshal %s into Go value for string", tok))
+			}
+		}
+
+		if tok == fflib.FFTok_null {
+
+		} else {
+
+			outBuf := fs.Output.Bytes()
+
+			j.WithdrawName = string(string(outBuf))
 
 		}
 	}

@@ -105,6 +105,7 @@ func (w *withdraw) Withdraw(info *payment.WithdrawInfo) (*payment.WithdrawResult
 			PayTime:      response.PayDate,
 			UserName:     info.UserName,
 			WithdrawCode: w.Code(),
+			WithdrawName: w.Name(),
 			Status:       payment.SUCCESS,
 		}, nil
 	} else if response.SubCode == "SYSTEM_ERROR" { //请求结果提示业务繁忙的,调用查询接口确认一下业务是否真实失败
@@ -121,6 +122,7 @@ func (w *withdraw) Withdraw(info *payment.WithdrawInfo) (*payment.WithdrawResult
 				PayTime:      response.PayDate,
 				UserName:     info.UserName,
 				WithdrawCode: w.Code(),
+				WithdrawName: w.Name(),
 				Status:       payment.SUCCESS,
 			}, nil
 		} else { //处理中的返回处理中
@@ -133,6 +135,7 @@ func (w *withdraw) Withdraw(info *payment.WithdrawInfo) (*payment.WithdrawResult
 				PayTime:      response.PayDate,
 				UserName:     info.UserName,
 				WithdrawCode: w.Code(),
+				WithdrawName: w.Name(),
 				Status:       payment.DEALING,
 			}, nil
 		}

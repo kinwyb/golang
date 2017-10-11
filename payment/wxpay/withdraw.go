@@ -97,6 +97,7 @@ func (w *wxwithdraw) Withdraw(info *payment.WithdrawInfo) (*payment.WithdrawResu
 				Money:        info.Money,
 				UserName:     info.UserName,
 				WithdrawCode: w.Code(),
+				WithdrawName: w.Name(),
 				PayTime:      time.Now().Format("2006-01-02 15:04:05"),
 				Status:       payment.SUCCESS,
 			}, nil
@@ -122,6 +123,7 @@ func (w *wxwithdraw) withdrawCheckResult(info *payment.WithdrawInfo) (*payment.W
 			Money:        info.Money,
 			UserName:     info.UserName,
 			WithdrawCode: w.Code(),
+			WithdrawName: w.Name(),
 			PayTime:      time.Now().Format("2006-01-02 15:04:05"),
 			Status:       payment.SUCCESS,
 		}, nil
@@ -133,6 +135,7 @@ func (w *wxwithdraw) withdrawCheckResult(info *payment.WithdrawInfo) (*payment.W
 			Money:        info.Money,
 			UserName:     info.UserName,
 			WithdrawCode: w.Code(),
+			WithdrawName: w.Name(),
 			PayTime:      time.Now().Format("2006-01-02 15:04:05"),
 			Status:       payment.DEALING,
 		}, nil
