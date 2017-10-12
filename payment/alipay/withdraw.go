@@ -18,13 +18,14 @@ import (
 
 	"crypto/rand"
 	"crypto/rsa"
-	"crypto/sha1"
 	"crypto/x509"
 
 	"bytes"
 	"sort"
 
 	"encoding/pem"
+
+	"crypto/sha256"
 
 	"github.com/kinwyb/golang/payment"
 	"github.com/kinwyb/golang/utils"
@@ -46,7 +47,7 @@ func (w *withdraw) Withdraw(info *payment.WithdrawInfo) (*payment.WithdrawResult
 		Type:     "ALIPAY_LOGONID",
 		Account:  info.CardNo,
 		RealName: info.UserName,
-		Amount:   fmt.Sprint("%.2f", info.Money),
+		Amount:   fmt.Sprintf("%.2f", info.Money),
 		Remark:   info.Desc,
 	}
 	requestbytes, err := request.MarshalJSON()
@@ -54,10 +55,11 @@ func (w *withdraw) Withdraw(info *payment.WithdrawInfo) (*payment.WithdrawResult
 		return nil, fmt.Errorf("请求参数编码错误:%s", err.Error())
 	}
 	args := map[string]string{
-		"appid":       w.config.Partner,
+		"app_id":      w.config.Partner,
 		"method":      "alipay.fund.trans.toaccount.transfer",
-		"format":      "JSON",
+		"format":      "json",
 		"charset":     "utf-8",
+		"sign_type":   "RSA2",
 		"timestamp":   time.Now().Format("2006-01-02 15:04:05"),
 		"version":     "1.0",
 		"biz_content": string(requestbytes),
@@ -67,7 +69,8 @@ func (w *withdraw) Withdraw(info *payment.WithdrawInfo) (*payment.WithdrawResult
 	for k, v := range args {
 		params.Add(k, v)
 	}
-	resp, err := http.PostForm(w.gateway, params)
+	log(utils.LogLevelDebug, "支付宝提现请求参数:%s", params.Encode())
+	resp, err := http.Post(w.gateway, "application/x-www-form-urlencoded;charset=utf-8", strings.NewReader(params.Encode()))
 	if err != nil {
 		return nil, fmt.Errorf("请求异常:%s", err.Error())
 	}
@@ -76,10 +79,14 @@ func (w *withdraw) Withdraw(info *payment.WithdrawInfo) (*payment.WithdrawResult
 	if err != nil {
 		return nil, fmt.Errorf("请求结果读取错误:%s", err.Error())
 	}
-	vmap := map[string]string{}
-	json.Unmarshal(respdata, &vmap)
-	if w.verify(vmap) {
-		log(utils.LogLevelError, "支付宝提现请求结果签名验证异常:%v", vmap)
+	log(utils.LogLevelInfo, "支付宝提现结果:%s", respdata)
+	vmap := &withdrawAPIResp{}
+	err = json.Unmarshal(respdata, &vmap)
+	if err != nil {
+		log(utils.LogLevelError, "结果解析错误:%s", err.Error())
+	}
+	if vmap.Sign != "" && !w.verify(string(respdata), vmap.Sign, 49) {
+		log(utils.LogLevelError, "支付宝提现请求结果签名验证异常")
 		return &payment.WithdrawResult{
 			TradeNo:      info.TradeNo,
 			CardNo:       info.CardNo,
@@ -90,11 +97,7 @@ func (w *withdraw) Withdraw(info *payment.WithdrawInfo) (*payment.WithdrawResult
 			Status:       payment.DEALING,
 		}, nil
 	}
-	response := &withdrawAPIResponse{}
-	err = response.UnmarshalJSON(respdata)
-	if err != nil {
-		return nil, fmt.Errorf("请求结果解析失败:%s", err.Error())
-	}
+	response := vmap.Method
 	if response.Code == "10000" {
 		return &payment.WithdrawResult{
 			TradeNo:      response.OutBizNo,
@@ -146,7 +149,7 @@ func (w *withdraw) Withdraw(info *payment.WithdrawInfo) (*payment.WithdrawResult
 //根据交易单号查询提现信息
 func (w *withdraw) QueryWithdraw(tradeno string, tradeDate ...time.Time) *payment.WithdrawQueryResult {
 	args := map[string]string{
-		"appid":       w.config.Partner,
+		"app_id":      w.config.Partner,
 		"method":      "alipay.fund.trans.order.query",
 		"format":      "JSON",
 		"charset":     "utf-8",
@@ -160,7 +163,7 @@ func (w *withdraw) QueryWithdraw(tradeno string, tradeDate ...time.Time) *paymen
 	for k, v := range args {
 		params.Add(k, v)
 	}
-	resp, err := http.PostForm(w.gateway, params)
+	resp, err := http.Post(w.gateway, "application/x-www-form-urlencoded;charset=utf-8", strings.NewReader(params.Encode()))
 	if err != nil {
 		log(utils.LogLevelError, "支付宝提现查询请求异常:%s", err.Error())
 		return &payment.WithdrawQueryResult{
@@ -177,30 +180,27 @@ func (w *withdraw) QueryWithdraw(tradeno string, tradeDate ...time.Time) *paymen
 			TradeNo: tradeno,
 		}
 	}
-	vmap := map[string]string{}
-	json.Unmarshal(respdata, &vmap)
-	if w.verify(vmap) {
+	log(utils.LogLevelInfo, "支付宝提现查询结果:%s", respdata)
+	vmap := &withdrawQueryAPIResp{}
+	err = json.Unmarshal(respdata, &vmap)
+	if err != nil {
+		log(utils.LogLevelError, "支付宝提现查询结果解析错误:%s", err.Error())
+	}
+	if vmap.Sign != "" && !w.verify(string(respdata), vmap.Sign, 42) {
 		log(utils.LogLevelError, "支付宝提现查询请求结果签名验证异常:%v", vmap)
 		return &payment.WithdrawQueryResult{
 			Status:  payment.DEALING,
 			TradeNo: tradeno,
 		}
 	}
-	response := &withdrawQueryAPIResponse{}
-	err = json.Unmarshal(respdata, &response)
-	if err != nil {
-		log(utils.LogLevelError, "支付宝提现查询请求结果解析失败:%s", err.Error())
-		return &payment.WithdrawQueryResult{
-			Status:  payment.DEALING,
-			TradeNo: tradeno,
-		}
-	}
+	response := vmap.Method
 	ret := &payment.WithdrawQueryResult{
 		Status:  payment.DEALING, //默认处理中
 		TradeNo: tradeno,
 	}
 	if response.Code == "10000" { //业务请求成功
-		switch resp.Status {
+		log(utils.LogLevelError, "请求成功")
+		switch response.Status {
 		case "SUCCESS":
 			ret.Status = payment.SUCCESS
 			ret.PayTime = response.PayDate
@@ -210,16 +210,8 @@ func (w *withdraw) QueryWithdraw(tradeno string, tradeDate ...time.Time) *paymen
 			ret.FailCode = response.ErrorCode
 			ret.FailMsg = response.FailReason
 		}
-		return ret
-	} else if response.SubCode == "SYSTEM_ERROR" { //返回业务繁忙的默认是处理中
-		return ret
 	}
-	//其他的异常查询结果失败
-	return &payment.WithdrawQueryResult{
-		Status:   payment.FAIL,
-		FailCode: response.ErrorCode,
-		FailMsg:  response.FailReason,
-	}
+	return ret
 }
 
 //签名
@@ -228,29 +220,30 @@ func (w *withdraw) sign(args map[string]string) {
 	signStr := w.createLinkString(keys, args)
 	data, err := w.decodeRSAKey(w.config.PrivateKey)
 	if err != nil {
-		log(utils.LogLevelError, "alipay私钥解析失败")
+		log(utils.LogLevelError, "支付宝提现私钥解析失败")
 		return
 	}
 	priv, err := x509.ParsePKCS8PrivateKey(data)
 	if err != nil {
-		log(utils.LogLevelError, "alipay签名RSA私钥初始化失败:"+err.Error())
+		log(utils.LogLevelError, "支付宝提现签名RSA私钥初始化失败:"+err.Error())
 		return
 	}
-	dt := sha1.Sum([]byte(signStr))
-	data, err = rsa.SignPKCS1v15(rand.Reader, priv.(*rsa.PrivateKey), crypto.SHA1, dt[:])
+	log(utils.LogLevelDebug, "支付宝提现签名字符串:%s", signStr)
+	dt := sha256.Sum256([]byte(signStr))
+	data, err = rsa.SignPKCS1v15(rand.Reader, priv.(*rsa.PrivateKey), crypto.SHA256, dt[:])
 	if err != nil {
-		log(utils.LogLevelError, "alipay签名失败:"+err.Error())
+		log(utils.LogLevelError, "支付宝提现签名失败:"+err.Error())
 		return
 	}
 	args["sign"] = base64.StdEncoding.EncodeToString(data)
-	args["sign_type"] = w.signType
+	log(utils.LogLevelError, "签名结果:%s", args["sign"])
 }
 
 //过滤
 func (w *withdraw) paraFilter(params map[string]string) []string {
 	keys := make([]string, 0)
 	for k, v := range params {
-		if k == "sign" || k == "sign_type" || strings.TrimSpace(v) == "" {
+		if k == "sign" || strings.TrimSpace(v) == "" {
 			delete(params, k)
 		} else {
 			keys = append(keys, k)
@@ -269,34 +262,32 @@ func (w *withdraw) createLinkString(keys []string, args map[string]string) strin
 		buf.WriteString(args[k])
 		buf.WriteString("&")
 	}
-	buf.Truncate(buf.Len() - 1)
+	if buf.Len() > 0 {
+		buf.Truncate(buf.Len() - 1)
+	}
 	return buf.String()
 }
 
 //verify 支付结果校验
-func (w *withdraw) verify(params map[string]string) bool {
-	if v, ok := params["notify_id"]; ok {
-		if !w.verifyResponse(v) {
-			return false
-		}
-	}
-	sign, _ := base64.StdEncoding.DecodeString(params["sign"])
-	keys := w.paraFilter(params)
-	signStr := w.createLinkString(keys, params)
+func (w *withdraw) verify(response string, signString string, start int) bool {
+	response = response[start:strings.LastIndex(response, ",\"sign\":")]
+	sign, _ := base64.StdEncoding.DecodeString(signString)
 	data, err := w.decodeRSAKey(w.config.PublicKey)
 	if err != nil {
-		log(utils.LogLevelError, "alipay公钥解析失败")
+		log(utils.LogLevelError, "支付宝提现公钥解析失败")
 		return false
 	}
 	pubi, err := x509.ParsePKIXPublicKey(data)
 	if err != nil {
-		log(utils.LogLevelError, "alipay结果校验RSA公钥初始化错误:"+err.Error())
+		log(utils.LogLevelError, "支付宝提现结果校验RSA公钥初始化错误:"+err.Error())
 		return false
 	}
-	dt := sha1.Sum([]byte(signStr))
-	err = rsa.VerifyPKCS1v15(pubi.(*rsa.PublicKey), crypto.SHA1, dt[:], sign)
+	dt := sha256.Sum256([]byte(response))
+	err = rsa.VerifyPKCS1v15(pubi.(*rsa.PublicKey), crypto.SHA256, dt[:], sign)
 	if err != nil {
-		log(utils.LogLevelError, "alipay结果校验失败:"+err.Error())
+		log(utils.LogLevelError, "支付宝提现结果校验失败:"+err.Error())
+		log(utils.LogLevelError, "支付宝提现校验签名的字符串:%s", response)
+		log(utils.LogLevelError, "支付宝提现校验的签名:%s", signString)
 		return false
 	}
 	return true
@@ -307,26 +298,11 @@ func (w *withdraw) decodeRSAKey(key string) ([]byte, error) {
 	if key[0] == '-' {
 		block, _ := pem.Decode([]byte(key))
 		if block == nil {
-			return nil, errors.New("alipay签名私钥解析失败")
+			return nil, errors.New("支付宝提现签名私钥解析失败")
 		}
 		return block.Bytes, nil
 	}
 	return base64.StdEncoding.DecodeString(key)
-}
-
-//获取远程服务器ATN结果,验证返回URL
-func (w *withdraw) verifyResponse(notifyID string) bool {
-	verifyURL := w.verifyURL + "partner=" + w.config.Partner + "&notify_id=" + notifyID
-	resp, err := http.Get(verifyURL)
-	if err != nil {
-		return false
-	}
-	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return false
-	}
-	return string(body) == "true"
 }
 
 //获取驱动编码

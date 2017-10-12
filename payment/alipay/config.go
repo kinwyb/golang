@@ -12,6 +12,11 @@ type PayConfig struct {
 	NotifyURL  string //异步跳转地址
 }
 
+type withdrawAPIResp struct {
+	Method *withdrawAPIResponse `json:"alipay_fund_trans_toaccount_transfer_response"`
+	Sign   string               `json:"sign"`
+}
+
 //withdrawAPIResponse 提现接口返回结果对象
 type withdrawAPIResponse struct {
 	Code     string `json:"code"`       //网关返回码
@@ -22,6 +27,10 @@ type withdrawAPIResponse struct {
 	OutBizNo string `json:"out_biz_no"` //商户转账唯一单号
 	OrderID  string `json:"order_id"`   //支付宝转账单据
 	PayDate  string `json:"pay_date"`   //支付时间
+}
+type withdrawQueryAPIResp struct {
+	Method *withdrawQueryAPIResponse `json:"alipay_fund_trans_order_query_response"`
+	Sign   string                    `json:"sign"`
 }
 
 //withdrawQueryAPIResponse 提现查询接口返回结果对象
@@ -44,7 +53,7 @@ type withdrawAPIRequest struct {
 	OutBizNo string `json:"out_biz_no"`      //商户转账唯一订单号
 	Type     string `json:"payee_type"`      //收款方账户类型
 	Account  string `json:"payee_account"`   //收款方账户
-	RealName string `json:"payee_real_name"` //收款方真实姓名
 	Amount   string `json:"amount"`          //转账金额
+	RealName string `json:"payee_real_name"` //收款方真实姓名
 	Remark   string `json:"remark"`          //转账备注
 }

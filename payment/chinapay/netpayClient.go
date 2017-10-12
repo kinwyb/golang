@@ -4,7 +4,6 @@ import (
 	"crypto/cipher"
 	"crypto/des"
 	"crypto/sha1"
-	"encoding/hex"
 	"errors"
 	"strings"
 
@@ -42,7 +41,7 @@ type NetPayClient struct {
 
 func (n *NetPayClient) sha1_128(str string) string {
 	hash := sha1.Sum([]byte(str))
-	return hex2bin(hashPAD) + hex2bin(hex.EncodeToString(hash[:]))
+	return hex2bin(hashPAD) + string(hash[:])
 }
 
 func BuildNetPayClientKeyFile(keypath string) (*NetPayClient, error) {
