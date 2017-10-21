@@ -41,7 +41,7 @@ type withdraw struct {
 }
 
 //提现操作,成功返回第三方交易流水,失败返回错误
-func (w *withdraw) Withdraw(info *payment.WithdrawInfo) (*payment.WithdrawResult, error) {
+func (w *withdraw) Withdraw(info *payment.WithdrawInfo) *payment.WithdrawResult {
 	request := &withdrawAPIRequest{
 		OutBizNo: info.TradeNo,
 		Type:     "ALIPAY_LOGONID",
@@ -52,7 +52,7 @@ func (w *withdraw) Withdraw(info *payment.WithdrawInfo) (*payment.WithdrawResult
 	}
 	requestbytes, err := request.MarshalJSON()
 	if err != nil {
-		return nil, fmt.Errorf("请求参数编码错误:%s", err.Error())
+		return payment.WithdrawParamsSerializeFail
 	}
 	args := map[string]string{
 		"app_id":      w.config.Partner,
@@ -72,12 +72,14 @@ func (w *withdraw) Withdraw(info *payment.WithdrawInfo) (*payment.WithdrawResult
 	log(utils.LogLevelDebug, "支付宝提现请求参数:%s", params.Encode())
 	resp, err := http.Post(w.gateway, "application/x-www-form-urlencoded;charset=utf-8", strings.NewReader(params.Encode()))
 	if err != nil {
-		return nil, fmt.Errorf("请求异常:%s", err.Error())
+		log(utils.LogLevelError, "支付宝提现请求异常:%s", err.Error())
+		return payment.WithdrawRequestFail
 	}
 	respdata, err := ioutil.ReadAll(resp.Body)
 	resp.Body.Close()
 	if err != nil {
-		return nil, fmt.Errorf("请求结果读取错误:%s", err.Error())
+		log(utils.LogLevelError, "支付宝提现请求结果读取异常:%s", err.Error())
+		return payment.WithdrawResponseReadFail
 	}
 	log(utils.LogLevelInfo, "支付宝提现结果:%s", respdata)
 	vmap := &withdrawAPIResp{}
@@ -95,7 +97,7 @@ func (w *withdraw) Withdraw(info *payment.WithdrawInfo) (*payment.WithdrawResult
 			UserName:     info.UserName,
 			WithdrawCode: w.Code(),
 			Status:       payment.DEALING,
-		}, nil
+		}
 	}
 	response := vmap.Method
 	if response.Code == "10000" {
@@ -110,11 +112,15 @@ func (w *withdraw) Withdraw(info *payment.WithdrawInfo) (*payment.WithdrawResult
 			WithdrawCode: w.Code(),
 			WithdrawName: w.Name(),
 			Status:       payment.SUCCESS,
-		}, nil
+		}
 	} else if response.SubCode == "SYSTEM_ERROR" { //请求结果提示业务繁忙的,调用查询接口确认一下业务是否真实失败
 		qret := w.QueryWithdraw(info.TradeNo)
 		if qret.Status == payment.FAIL { //提现失败
-			return nil, fmt.Errorf("提现失败[%s]:%s", qret.FailCode, qret.FailMsg)
+			return &payment.WithdrawResult{
+				Status:   payment.FAIL,
+				FailCode: qret.FailCode,
+				FailMsg:  qret.FailMsg,
+			}
 		} else if qret.Status == payment.SUCCESS { //查询出来是成功的返回成功
 			return &payment.WithdrawResult{
 				TradeNo:      response.OutBizNo,
@@ -127,7 +133,7 @@ func (w *withdraw) Withdraw(info *payment.WithdrawInfo) (*payment.WithdrawResult
 				WithdrawCode: w.Code(),
 				WithdrawName: w.Name(),
 				Status:       payment.SUCCESS,
-			}, nil
+			}
 		} else { //处理中的返回处理中
 			return &payment.WithdrawResult{
 				TradeNo:      response.OutBizNo,
@@ -140,10 +146,14 @@ func (w *withdraw) Withdraw(info *payment.WithdrawInfo) (*payment.WithdrawResult
 				WithdrawCode: w.Code(),
 				WithdrawName: w.Name(),
 				Status:       payment.DEALING,
-			}, nil
+			}
 		}
 	}
-	return nil, fmt.Errorf("提现失败[%s]:%s", response.SubCode, response.SubMsg)
+	return &payment.WithdrawResult{
+		Status:   payment.FAIL,
+		FailCode: response.SubCode,
+		FailMsg:  response.SubMsg,
+	}
 }
 
 //根据交易单号查询提现信息

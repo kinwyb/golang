@@ -12,8 +12,6 @@ import (
 
 	"io/ioutil"
 
-	"errors"
-
 	"github.com/kinwyb/golang/payment"
 	"github.com/kinwyb/golang/utils"
 	"golang.org/x/crypto/pkcs12"
@@ -67,7 +65,7 @@ func (w *wxwithdraw) GetWithdraw(cfg interface{}) payment.Withdraw {
 }
 
 //提现操作,成功返回第三方交易流水,失败返回错误
-func (w *wxwithdraw) Withdraw(info *payment.WithdrawInfo) (*payment.WithdrawResult, error) {
+func (w *wxwithdraw) Withdraw(info *payment.WithdrawInfo) *payment.WithdrawResult {
 	params := map[string]string{
 		"mch_appid":        w.config.AppID,
 		"mchid":            w.config.MchID,
@@ -82,11 +80,9 @@ func (w *wxwithdraw) Withdraw(info *payment.WithdrawInfo) (*payment.WithdrawResu
 	}
 	result, err := w.request(params, "https://api.mch.weixin.qq.com/mmpaymkttransfers/promotion/transfers")
 	if err != nil {
-		if err.Error() == "请求结果读取失败" { //结果读取失败的，确认一下是否交易完成
-			return w.withdrawCheckResult(info)
-		}
-		return nil, err
+		return err
 	}
+	//TODO: 微信签名验证
 	if result["return_code"] == "SUCCESS" {
 		if result["result_code"] == "SUCCESS" {
 			return &payment.WithdrawResult{
@@ -100,19 +96,27 @@ func (w *wxwithdraw) Withdraw(info *payment.WithdrawInfo) (*payment.WithdrawResu
 				WithdrawName: w.Name(),
 				PayTime:      time.Now().Format("2006-01-02 15:04:05"),
 				Status:       payment.SUCCESS,
-			}, nil
+			}
 		} else if result["err_code"] == "SYSTEMERROR" { //请求结果提示业务繁忙的,调用查询接口确认一下业务是否真实失败
 			return w.withdrawCheckResult(info)
 		}
 		log(utils.LogLevelError, "微信提现失败:%s", result["err_code_des"])
-		return nil, errors.New(result["err_code_des"])
+		return &payment.WithdrawResult{
+			Status:   payment.FAIL,
+			FailCode: result["err_code"],
+			FailMsg:  result["err_code_des"],
+		}
 	}
 	log(utils.LogLevelError, "微信提现失败:%s", result["return_msg"])
-	return nil, errors.New(result["return_msg"])
+	return &payment.WithdrawResult{
+		Status:   payment.FAIL,
+		FailCode: result["return_code"],
+		FailMsg:  result["return_msg"],
+	}
 }
 
 //提现检测是否完成
-func (w *wxwithdraw) withdrawCheckResult(info *payment.WithdrawInfo) (*payment.WithdrawResult, error) {
+func (w *wxwithdraw) withdrawCheckResult(info *payment.WithdrawInfo) *payment.WithdrawResult {
 	res := w.QueryWithdraw(info.TradeNo)
 	if res.Status == payment.SUCCESS {
 		return &payment.WithdrawResult{
@@ -126,7 +130,7 @@ func (w *wxwithdraw) withdrawCheckResult(info *payment.WithdrawInfo) (*payment.W
 			WithdrawName: w.Name(),
 			PayTime:      time.Now().Format("2006-01-02 15:04:05"),
 			Status:       payment.SUCCESS,
-		}, nil
+		}
 	} else if res.Status == payment.DEALING {
 		return &payment.WithdrawResult{
 			TradeNo:      info.TradeNo,
@@ -138,41 +142,45 @@ func (w *wxwithdraw) withdrawCheckResult(info *payment.WithdrawInfo) (*payment.W
 			WithdrawName: w.Name(),
 			PayTime:      time.Now().Format("2006-01-02 15:04:05"),
 			Status:       payment.DEALING,
-		}, nil
+		}
 	}
 	log(utils.LogLevelError, "微信提现失败[%s]:%s", res.FailCode, res.FailMsg)
-	return nil, errors.New(res.FailMsg)
+	return &payment.WithdrawResult{
+		Status:   payment.FAIL,
+		FailCode: res.FailCode,
+		FailMsg:  res.FailMsg,
+	}
 }
 
 //请求
 //@param params:map[string]string 请求参数
 //@param apiURL:string 请求地址
-func (w *wxwithdraw) request(params map[string]string, apiURL string) (map[string]string, error) {
+func (w *wxwithdraw) request(params map[string]string, apiURL string) (map[string]string, *payment.WithdrawResult) {
 	sign(params, w.config.Key)
 	xmlstr := buildXML(params)
 	log(utils.LogLevelInfo, "微信提现请求:%s", xmlstr)
 	request, err := http.NewRequest("POST", apiURL, strings.NewReader(xmlstr.String()))
 	if err != nil {
 		log(utils.LogLevelError, "微信提现请求创建失败:%s", err.Error())
-		return nil, fmt.Errorf("请求创建失败")
+		return nil, payment.WithdrawRequestFail
 	}
 	client := &http.Client{Transport: w.transport}
 	response, err := client.Do(request)
 	if err != nil {
 		log(utils.LogLevelError, "微信提现请求失败:%s", err.Error())
-		return nil, fmt.Errorf("请求失败")
+		return nil, payment.WithdrawRequestFail
 	}
 	responsedata, err := ioutil.ReadAll(response.Body)
 	response.Body.Close()
 	if err != nil {
 		log(utils.LogLevelError, "微信提现请求结果读取失败:%s", err.Error())
-		return nil, fmt.Errorf("请求结果读取失败")
+		return nil, payment.WithdrawResponseReadFail
 	}
 	log(utils.LogLevelInfo, "微信提现结果:%s", responsedata)
 	result, err := decodeXMLToMap(responsedata)
 	if err != nil {
 		log(utils.LogLevelError, "微信提现请求结果解析失败:%s", err.Error())
-		return nil, fmt.Errorf("请求结果解析失败")
+		return nil, payment.WithdrawResponseUnserializeFail
 	}
 	return result, nil
 }

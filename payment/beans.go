@@ -56,6 +56,8 @@ type WithdrawResult struct {
 	Money        float64 `description:"提现金额"`
 	PayTime      string  `description:"完成时间"`
 	Status       Status  `description:"提现状态"`
+	FailCode     string  `description:"错误编码"`
+	FailMsg      string  `description:"错误消息"`
 }
 
 //提现查询结果

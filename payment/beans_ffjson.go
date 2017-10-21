@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+
 	fflib "github.com/pquerna/ffjson/fflib/v1"
 )
 
@@ -3092,6 +3093,10 @@ func (j *WithdrawResult) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 	fflib.WriteJsonString(buf, string(j.PayTime))
 	buf.WriteString(`,"Status":`)
 	fflib.WriteJsonString(buf, string(j.Status))
+	buf.WriteString(`,"FailCode":`)
+	fflib.WriteJsonString(buf, string(j.FailCode))
+	buf.WriteString(`,"FailMsg":`)
+	fflib.WriteJsonString(buf, string(j.FailMsg))
 	buf.WriteByte('}')
 	return nil
 }
@@ -3121,6 +3126,10 @@ const (
 	ffjtWithdrawResultPayTime
 
 	ffjtWithdrawResultStatus
+
+	ffjtWithdrawResultFailCode
+
+	ffjtWithdrawResultFailMsg
 )
 
 var ffjKeyWithdrawResultAppID = []byte("AppID")
@@ -3144,6 +3153,10 @@ var ffjKeyWithdrawResultMoney = []byte("Money")
 var ffjKeyWithdrawResultPayTime = []byte("PayTime")
 
 var ffjKeyWithdrawResultStatus = []byte("Status")
+
+var ffjKeyWithdrawResultFailCode = []byte("FailCode")
+
+var ffjKeyWithdrawResultFailMsg = []byte("FailMsg")
 
 // UnmarshalJSON umarshall json - template of ffjson
 func (j *WithdrawResult) UnmarshalJSON(input []byte) error {
@@ -3227,6 +3240,19 @@ mainparse:
 						goto mainparse
 					}
 
+				case 'F':
+
+					if bytes.Equal(ffjKeyWithdrawResultFailCode, kn) {
+						currentKey = ffjtWithdrawResultFailCode
+						state = fflib.FFParse_want_colon
+						goto mainparse
+
+					} else if bytes.Equal(ffjKeyWithdrawResultFailMsg, kn) {
+						currentKey = ffjtWithdrawResultFailMsg
+						state = fflib.FFParse_want_colon
+						goto mainparse
+					}
+
 				case 'M':
 
 					if bytes.Equal(ffjKeyWithdrawResultMoney, kn) {
@@ -3285,6 +3311,18 @@ mainparse:
 						goto mainparse
 					}
 
+				}
+
+				if fflib.EqualFoldRight(ffjKeyWithdrawResultFailMsg, kn) {
+					currentKey = ffjtWithdrawResultFailMsg
+					state = fflib.FFParse_want_colon
+					goto mainparse
+				}
+
+				if fflib.SimpleLetterEqualFold(ffjKeyWithdrawResultFailCode, kn) {
+					currentKey = ffjtWithdrawResultFailCode
+					state = fflib.FFParse_want_colon
+					goto mainparse
 				}
 
 				if fflib.EqualFoldRight(ffjKeyWithdrawResultStatus, kn) {
@@ -3402,6 +3440,12 @@ mainparse:
 
 				case ffjtWithdrawResultStatus:
 					goto handle_Status
+
+				case ffjtWithdrawResultFailCode:
+					goto handle_FailCode
+
+				case ffjtWithdrawResultFailMsg:
+					goto handle_FailMsg
 
 				case ffjtWithdrawResultnosuchkey:
 					err = fs.SkipField(tok)
@@ -3704,6 +3748,58 @@ handle_Status:
 			outBuf := fs.Output.Bytes()
 
 			j.Status = Status(string(outBuf))
+
+		}
+	}
+
+	state = fflib.FFParse_after_value
+	goto mainparse
+
+handle_FailCode:
+
+	/* handler: j.FailCode type=string kind=string quoted=false*/
+
+	{
+
+		{
+			if tok != fflib.FFTok_string && tok != fflib.FFTok_null {
+				return fs.WrapErr(fmt.Errorf("cannot unmarshal %s into Go value for string", tok))
+			}
+		}
+
+		if tok == fflib.FFTok_null {
+
+		} else {
+
+			outBuf := fs.Output.Bytes()
+
+			j.FailCode = string(string(outBuf))
+
+		}
+	}
+
+	state = fflib.FFParse_after_value
+	goto mainparse
+
+handle_FailMsg:
+
+	/* handler: j.FailMsg type=string kind=string quoted=false*/
+
+	{
+
+		{
+			if tok != fflib.FFTok_string && tok != fflib.FFTok_null {
+				return fs.WrapErr(fmt.Errorf("cannot unmarshal %s into Go value for string", tok))
+			}
+		}
+
+		if tok == fflib.FFTok_null {
+
+		} else {
+
+			outBuf := fs.Output.Bytes()
+
+			j.FailMsg = string(string(outBuf))
 
 		}
 	}

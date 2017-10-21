@@ -28,7 +28,7 @@ type Driver interface {
 
 //Withdraw 提现接口
 type Withdraw interface {
-	Withdraw(info *WithdrawInfo) (*WithdrawResult, error)                      //提现操作,成功返回第三方交易流水,失败返回错误
+	Withdraw(info *WithdrawInfo) *WithdrawResult                               //提现操作,成功返回第三方交易流水,失败返回错误
 	QueryWithdraw(tradeno string, tradeDate ...time.Time) *WithdrawQueryResult //查询提现交易
 	Code() string                                                              //返回提现编码
 	Name() string                                                              //返回提现方式名称

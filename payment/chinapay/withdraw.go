@@ -1,7 +1,6 @@
 package chinapay
 
 import (
-	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -28,14 +27,22 @@ type withdraw struct {
 	queryWithdrawURL string
 }
 
-var time_FORMAT = "2006-01-02 15:04:05"
+var timeFormat = "2006-01-02 15:04:05"
+var tradeFormatError = &payment.WithdrawResult{
+	Status:   payment.FAIL,
+	FailCode: "TRADENO_FORMAT_ERROR",
+	FailMsg:  "交易单号必须市小于16位的纯数字",
+}
 
-func (w *withdraw) Withdraw(info *payment.WithdrawInfo) (*payment.WithdrawResult, error) {
-	pa, err := regexp.Compile("\\d{1,16}")
-	if err != nil {
-		return nil, err
-	} else if !pa.MatchString(info.TradeNo) {
-		return nil, fmt.Errorf("交易单号必须市小于16位的纯数字")
+var regExpTradeNo *regexp.Regexp
+
+func init() {
+	regExpTradeNo, _ = regexp.Compile("\\d{1,16}")
+}
+
+func (w *withdraw) Withdraw(info *payment.WithdrawInfo) *payment.WithdrawResult {
+	if regExpTradeNo != nil && !regExpTradeNo.MatchString(info.TradeNo) {
+		return tradeFormatError
 	}
 	args := map[string]string{
 		"merId":    w.config.MerID,                //商户号
@@ -69,7 +76,7 @@ func (w *withdraw) Withdraw(info *payment.WithdrawInfo) (*payment.WithdrawResult
 	request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	if err != nil {
 		log(utils.LogLevelError, "银联提现请求创建失败:%s", err.Error())
-		return nil, errors.New("请求创建异常")
+		return payment.WithdrawRequestFail
 	}
 	client := http.Client{
 		Timeout: 1 * time.Minute,
@@ -77,20 +84,20 @@ func (w *withdraw) Withdraw(info *payment.WithdrawInfo) (*payment.WithdrawResult
 	response, err := client.Do(request)
 	if err != nil {
 		log(utils.LogLevelError, "银联提现请求失败:%s", err.Error())
-		return nil, errors.New("请求异常")
+		return payment.WithdrawRequestFail
 	}
 	responseData, err := ioutil.ReadAll(response.Body)
 	response.Body.Close()
 	if err != nil {
 		log(utils.LogLevelError, "银联提现请求结果读取失败:%s", err.Error())
-		return nil, errors.New("请求结果读取异常")
+		return payment.WithdrawResponseReadFail
 	}
 	log(utils.LogLevelInfo, "银联提现请求结果:%s", responseData)
 	responseString := string(responseData)
 	idex := strings.LastIndex(responseString, "&")
 	res, err := url.ParseQuery(responseString)
 	if err != nil { //要检测提现是否完成
-		return nil, errors.New("银联提现结果读取异常")
+		return payment.WithdrawResponseUnserializeFail
 	}
 	result := map[string]string{}
 	for k, v := range res {
@@ -101,67 +108,69 @@ func (w *withdraw) Withdraw(info *payment.WithdrawInfo) (*payment.WithdrawResult
 		if !v {
 			log(utils.LogLevelError, "银联结果签名异常=>[%s]\n等待签名base64结果:%s\n签名:%s",
 				responseString[:idex], base64.StdEncoding.EncodeToString([]byte(responseString[:idex])), responseString[idex+10:])
-			return nil, fmt.Errorf("银联结果签名异常：%s", responseData)
+			return payment.WithdrawResponseVerifyFail
 		}
 		switch result["stat"] {
 		case "s":
 			//交易成功
 			return &payment.WithdrawResult{
-				TradeNo:      info.TradeNo,                   //交易流水号
-				ThridFlowNo:  result["cpSeqId"],              //第三方交易流水号
-				CardNo:       info.CardNo,                    //收款账户
-				CertID:       info.CertID,                    //收款人身份证号
-				Money:        info.Money,                     //提现金额
-				PayTime:      time.Now().Format(time_FORMAT), //完成时间
+				TradeNo:      info.TradeNo,                  //交易流水号
+				ThridFlowNo:  result["cpSeqId"],             //第三方交易流水号
+				CardNo:       info.CardNo,                   //收款账户
+				CertID:       info.CertID,                   //收款人身份证号
+				Money:        info.Money,                    //提现金额
+				PayTime:      time.Now().Format(timeFormat), //完成时间
 				UserName:     info.UserName,
 				WithdrawCode: w.Code(),
 				WithdrawName: w.Name(),
 				Status:       payment.SUCCESS, //提现状态
-			}, nil
+			}
 		case "2", "3", "4", "5", "7", "8":
 			return &payment.WithdrawResult{
-				TradeNo:      info.TradeNo,                   //交易流水号
-				ThridFlowNo:  result["cpSeqId"],              //第三方交易流水号
-				CardNo:       info.CardNo,                    //收款账户
-				CertID:       info.CertID,                    //收款人身份证号
-				Money:        info.Money,                     //提现金额
-				PayTime:      time.Now().Format(time_FORMAT), //完成时间
+				TradeNo:      info.TradeNo,                  //交易流水号
+				ThridFlowNo:  result["cpSeqId"],             //第三方交易流水号
+				CardNo:       info.CardNo,                   //收款账户
+				CertID:       info.CertID,                   //收款人身份证号
+				Money:        info.Money,                    //提现金额
+				PayTime:      time.Now().Format(timeFormat), //完成时间
 				UserName:     info.UserName,
 				WithdrawCode: w.Code(),
 				WithdrawName: w.Name(),
 				Status:       payment.DEALING, //提现状态
-			}, nil
+			}
 			//处理中
 		case "6", "9":
 			//交易失败
 			return &payment.WithdrawResult{
-				TradeNo:      info.TradeNo,                   //交易流水号
-				ThridFlowNo:  result["cpSeqId"],              //第三方交易流水号
-				CardNo:       info.CardNo,                    //收款账户
-				CertID:       info.CertID,                    //收款人身份证号
-				Money:        info.Money,                     //提现金额
-				PayTime:      time.Now().Format(time_FORMAT), //完成时间
+				TradeNo:      info.TradeNo,                  //交易流水号
+				ThridFlowNo:  result["cpSeqId"],             //第三方交易流水号
+				CardNo:       info.CardNo,                   //收款账户
+				CertID:       info.CertID,                   //收款人身份证号
+				Money:        info.Money,                    //提现金额
+				PayTime:      time.Now().Format(timeFormat), //完成时间
 				UserName:     info.UserName,
 				WithdrawCode: w.Code(),
 				WithdrawName: w.Name(),
 				Status:       payment.FAIL, //提现状态
-			}, nil
+			}
 		}
 	}
 	//否则查询下交易状态返回查询的状态结果
 	qresult := w.QueryWithdraw(info.TradeNo)
 	return &payment.WithdrawResult{
-		TradeNo:      info.TradeNo,                   //交易流水号
-		ThridFlowNo:  result["cpSeqId"],              //第三方交易流水号
-		CardNo:       info.CardNo,                    //收款账户
-		CertID:       info.CertID,                    //收款人身份证号
-		Money:        info.Money,                     //提现金额
-		PayTime:      time.Now().Format(time_FORMAT), //完成时间
+		TradeNo:      info.TradeNo,                  //交易流水号
+		ThridFlowNo:  result["cpSeqId"],             //第三方交易流水号
+		CardNo:       info.CardNo,                   //收款账户
+		CertID:       info.CertID,                   //收款人身份证号
+		Money:        info.Money,                    //提现金额
+		PayTime:      time.Now().Format(timeFormat), //完成时间
 		UserName:     info.UserName,
 		WithdrawCode: w.Code(),
 		WithdrawName: w.Name(),
 		Status:       qresult.Status, //提现状态
-	}, nil
+		FailCode:     qresult.FailCode,
+		FailMsg:      qresult.FailMsg,
+	}
 }
 
 //签名
@@ -238,10 +247,10 @@ func (w *withdraw) QueryWithdraw(tradeno string, tradeDate ...time.Time) *paymen
 			case "s":
 				//交易成功
 				return &payment.WithdrawQueryResult{
-					Status:      payment.SUCCESS,                //提现状态
-					PayTime:     time.Now().Format(time_FORMAT), //完成时间
-					TradeNo:     tradeno,                        //交易流水号
-					ThridFlowNo: result[5],                      //第三方交易流水号
+					Status:      payment.SUCCESS,               //提现状态
+					PayTime:     time.Now().Format(timeFormat), //完成时间
+					TradeNo:     tradeno,                       //交易流水号
+					ThridFlowNo: result[5],                     //第三方交易流水号
 				}
 			case "2", "3", "4", "5", "7", "8":
 				return returnDealign
