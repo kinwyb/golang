@@ -24,7 +24,7 @@ Use {{"ssltool help [command]" | bold}} for more information about a command.
 `
 
 var helpTemplate = `{{"USAGE" | headline}}
-  {{.UsageLine | printf "paygateway %s" | bold}}
+  {{.UsageLine | printf "ssltool %s" | bold}}
 {{if .Options}}{{endline}}{{"OPTIONS" | headline}}{{range $k,$v := .Options}}
   {{$k | printf "-%s" | bold}}
       {{$v}}
