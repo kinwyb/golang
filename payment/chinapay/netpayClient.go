@@ -105,8 +105,7 @@ func (n *NetPayClient) rsaDecrypt(input string) string {
 	check := bchexdec(input)
 	modulus := bin2int(n.key.modulus)
 	exponent := bchexdec("010001")
-	result := pow(check, exponent)
-	result = result.Mod(result, modulus)
+	result := check.Exp(check, exponent, modulus)
 	ret := bcdechex(result)
 	return strings.ToUpper(padstr(ret))
 }

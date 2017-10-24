@@ -29,7 +29,7 @@ func TestWithdraw_Withdraw(t *testing.T) {
 	}
 	//公钥
 	//filepath := "/Users/heldiam/Developer/文档/银联/提现接口/测试/PgPubk.key"
-	filepath := "/Users/heldiam/Developer/文档/银联/提现接口/PgPubk.key"
+	filepath := "/Users/heldiam/Developer/Documents/chinapay/提现接口/PgPubk.key"
 	file, err := os.Open(filepath)
 	if err != nil {
 		t.Fatalf("公钥文件打开失败：%s", err)
@@ -43,7 +43,7 @@ func TestWithdraw_Withdraw(t *testing.T) {
 	}
 	//私钥
 	//filepath = "/Users/heldiam/Developer/文档/银联/提现接口/测试/808080211881045/MerPrK_808080211881045_20170607144054.key"
-	filepath = "/Users/heldiam/Developer/文档/银联/提现接口/808080211305113-116142/MerPrK.key"
+	filepath = "/Users/heldiam/Developer/Documents/chinapay/提现接口/808080211305113-116142/MerPrK.key"
 	file, err = os.Open(filepath)
 	if err != nil {
 		t.Fatalf("私钥文件打开失败：%s", err)
@@ -62,7 +62,7 @@ func TestWithdraw_Withdraw(t *testing.T) {
 	idex := strings.LastIndex(responseData, "&")
 	v := w.pubKey.Verify(base64.StdEncoding.EncodeToString([]byte(responseData[:idex])), responseData[idex+10:])
 	log(utils.LogLevelDebug, "验证签名结果:%t", v)
-	log(utils.LogLevelError, "银联结果签名异常=>[%s]\n等待签名base64结果:%s\n签名:%s",
+	log(utils.LogLevelError, "银联结果签名=>[%s]\n等待签名base64结果:%s\n签名:%s",
 		responseData[:idex], base64.StdEncoding.EncodeToString([]byte(responseData[:idex])), responseData[idex+10:])
 	return
 	/*
