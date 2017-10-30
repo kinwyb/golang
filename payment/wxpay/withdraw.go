@@ -158,7 +158,8 @@ func (w *wxwithdraw) withdrawCheckResult(info *payment.WithdrawInfo) *payment.Wi
 func (w *wxwithdraw) request(params map[string]string, apiURL string) (map[string]string, *payment.WithdrawResult) {
 	sign(params, w.config.Key)
 	xmlstr := buildXML(params)
-	log(utils.LogLevelInfo, "微信提现请求:%s", xmlstr)
+	log(utils.LogLevelInfo, "微信地址:%s", apiURL)
+	log(utils.LogLevelInfo, "微信请求:%s", xmlstr)
 	request, err := http.NewRequest("POST", apiURL, strings.NewReader(xmlstr.String()))
 	if err != nil {
 		log(utils.LogLevelError, "微信提现请求创建失败:%s", err.Error())
@@ -188,8 +189,8 @@ func (w *wxwithdraw) request(params map[string]string, apiURL string) (map[strin
 //查询提现交易
 func (w *wxwithdraw) QueryWithdraw(tradeno string, tradeDate ...time.Time) *payment.WithdrawQueryResult {
 	params := map[string]string{
-		"mch_appid":        w.config.AppID,
-		"mchid":            w.config.MchID,
+		"appid":            w.config.AppID,
+		"mch_id":           w.config.MchID,
 		"nonce_str":        nonceStr(),
 		"partner_trade_no": tradeno,
 	}
@@ -210,7 +211,7 @@ func (w *wxwithdraw) QueryWithdraw(tradeno string, tradeDate ...time.Time) *paym
 				ret.Status = payment.SUCCESS
 				ret.PayTime = result["transfer_time"]
 				ret.ThridFlowNo = result["detail_id"]
-			} else if result["status"] == "FAILED" {
+			} else if result["status"] == "FAIL" {
 				ret.Status = payment.FAIL
 				ret.FailMsg = result["reason"]
 			}
