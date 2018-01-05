@@ -1,10 +1,8 @@
 package alipay
 
 import (
-	"errors"
 	"io/ioutil"
 	"net/http"
-	"strings"
 
 	"github.com/kinwyb/golang/payment"
 
@@ -12,22 +10,7 @@ import (
 
 	"fmt"
 
-	"sort"
-
-	"bytes"
-
-	"crypto/rand"
-	"crypto/x509"
-
-	"crypto/rsa"
-
-	"crypto/sha1"
-
-	"crypto"
-
-	"encoding/base64"
-	"encoding/pem"
-
+	"encoding/json"
 	"strconv"
 )
 
@@ -42,34 +25,27 @@ type alipay struct {
 
 //支付,返回支付代码
 func (a *alipay) Pay(req *payment.PayRequest) (string, error) {
+	service := "alipay.trade.page.pay"
 	sParams := map[string]string{
-		"service":        "create_direct_pay_by_user",
-		"partner":        a.config.Partner,
-		"seller_id":      a.config.Partner,
-		"_input_charset": a.inputCharset,
-		"payment_type":   "1",
-		"notify_url":     a.config.NotifyURL,
-		"return_url":     a.config.ReturnURL,
-		"subject":        req.Desc,
-		"total_fee":      fmt.Sprintf("%.2f", req.Money),
-		"out_trade_no":   req.No,
+		"subject":      req.Desc,
+		"total_amount": fmt.Sprintf("%.2f", req.Money),
+		"out_trade_no": req.No,
+		"product_code": "FAST_INSTANT_TRADE_PAY",
 	}
-	a.sign(sParams)
-	buf := bytes.NewBufferString("<form id=\"alipaysubmit\" name=\"alipaysubmit\" action=\"")
-	buf.WriteString(a.gateway)
-	buf.WriteString("_input_charset=\"")
-	buf.WriteString(a.inputCharset)
-	buf.WriteString("\" method=\"get\">")
-	for k, v := range sParams {
-		buf.WriteString("<input type=\"hidden\" name=\"")
-		buf.WriteString(k)
-		buf.WriteString("\" value=\"")
-		buf.WriteString(v)
-		buf.WriteString("\"/>")
+	requestbytes, err := json.Marshal(sParams)
+	if err != nil {
+		return "", fmt.Errorf("参数序列化错误")
 	}
-	buf.WriteString("<input type=\"submit\" value=\"提交\" style=\"display:none;\"></form>")
-	buf.WriteString("<script>document.forms['alipaysubmit'].submit();</script>")
-	return buf.String(), nil
+	if req.IsApp { //app支付
+		sParams["product_code"] = "QUICK_MSECURITY_PAY"
+		service = "alipay.trade.app.pay"
+		respdata, err := request(service, a.config, string(requestbytes), a.gateway)
+		if err != nil {
+			return "", err
+		}
+		return string(respdata), nil
+	}
+	return buildForm(service, a.config, string(requestbytes), a.gateway), nil
 }
 
 //异步结果通知处理,返回支付结果
@@ -79,19 +55,19 @@ func (a *alipay) Notify(params map[string]string) *payment.PayResult {
 	}
 	delete(params, "request_post_body")
 	result := &payment.PayResult{
-		PayCode: a.Code(),
-		Navite:  params,
+		PayCode:      a.Code(),
+		Navite:       params,
+		TradeNo:      params["out_trade_no"], //商户订单号
+		No:           params["out_trade_no"], //原始订单号
+		ThirdTradeNo: params["trade_no"],     //支付宝交易号
 	}
-	if _, ok := params["total_fee"]; !ok {
+	if _, ok := params["total_amount"]; !ok {
 		result.ErrMsg = "支付宝回调数据错误"
 		result.Succ = false
 		return result
 	}
 	var err error
-	result.TradeNo = params["out_trade_no"]  //商户订单号
-	result.No = params["out_trade_no"]       //原始订单号
-	result.ThirdTradeNo = params["trade_no"] //支付宝交易号
-	result.Money, err = strconv.ParseFloat(params["total_fee"], 64)
+	result.Money, err = strconv.ParseFloat(params["total_amount"], 64)
 	if err != nil {
 		result.Succ = false
 		result.ErrMsg = "支付宝回调数据错误"
@@ -112,7 +88,20 @@ func (a *alipay) Notify(params map[string]string) *payment.PayResult {
 
 //同步结果跳转处理,返回支付结果
 func (a *alipay) Result(params map[string]string) *payment.PayResult {
-	return a.Notify(params)
+	//支付宝回调数据不存在支付结果字段，咨询客服后回答只有成功才会同步跳转，所以同步跳转结果只要验证签名即可，默认都是成功的
+	result := &payment.PayResult{
+		PayCode:      a.Code(),
+		Navite:       params,
+		TradeNo:      params["out_trade_no"], //商户订单号
+		No:           params["out_trade_no"], //原始订单号
+		ThirdTradeNo: params["trade_no"],     //支付宝交易号
+		Succ:         true,
+	}
+	if !a.verify(params) {
+		result.Succ = false
+		result.ErrMsg = "支付宝回调数据验证失败"
+	}
+	return result
 }
 
 //NotifyResult 通知结果返回内容
@@ -135,7 +124,7 @@ func (a *alipay) GetPayment(cfg interface{}) payment.Payment {
 		return nil
 	}
 	obj := &alipay{
-		gateway:      "https://mapi.alipay.com/gateway.do?",
+		gateway:      "https://openapi.alipay.com/gateway.do",
 		verifyURL:    "https://mapi.alipay.com/gateway.do?service=notify_verify&",
 		signType:     "RSA",
 		inputCharset: "UTF-8",
@@ -149,96 +138,18 @@ func (a *alipay) Driver() string {
 	return "alipay"
 }
 
-//过滤
-func (a *alipay) paraFilter(params map[string]string) []string {
-	keys := make([]string, 0)
-	for k, v := range params {
-		if k == "sign" || k == "sign_type" || strings.TrimSpace(v) == "" {
-			delete(params, k)
-		} else {
-			keys = append(keys, k)
-		}
-	}
-	sort.Strings(keys)
-	return keys
-}
-
-//拼接字符串 按照“参数=参数值”的模式用“&”字符拼接成字符串
-func (a *alipay) createLinkString(keys []string, args map[string]string) string {
-	buf := bytes.NewBufferString("")
-	for _, k := range keys {
-		buf.WriteString(k)
-		buf.WriteString("=")
-		buf.WriteString(args[k])
-		buf.WriteString("&")
-	}
-	buf.Truncate(buf.Len() - 1)
-	return buf.String()
-}
-
-//签名
-func (a *alipay) sign(args map[string]string) {
-	keys := a.paraFilter(args)
-	signStr := a.createLinkString(keys, args)
-	data, err := a.decodeRSAKey(a.config.PrivateKey)
-	if err != nil {
-		log(utils.LogLevelError, "alipay私钥解析失败")
-		return
-	}
-	priv, err := x509.ParsePKCS8PrivateKey(data)
-	if err != nil {
-		log(utils.LogLevelError, "alipay签名RSA私钥初始化失败:"+err.Error())
-		return
-	}
-	dt := sha1.Sum([]byte(signStr))
-	data, err = rsa.SignPKCS1v15(rand.Reader, priv.(*rsa.PrivateKey), crypto.SHA1, dt[:])
-	if err != nil {
-		log(utils.LogLevelError, "alipay签名失败:"+err.Error())
-		return
-	}
-	args["sign"] = base64.StdEncoding.EncodeToString(data)
-	args["sign_type"] = a.signType
-}
-
-//decodeRSAKey 解析RSA密钥
-func (a *alipay) decodeRSAKey(key string) ([]byte, error) {
-	if key[0] == '-' {
-		block, _ := pem.Decode([]byte(key))
-		if block == nil {
-			return nil, errors.New("alipay签名私钥解析失败")
-		}
-		return block.Bytes, nil
-	}
-	return base64.StdEncoding.DecodeString(key)
-}
-
 //verify 支付结果校验
 func (a *alipay) verify(params map[string]string) bool {
-	if v, ok := params["notify_id"]; ok {
-		if !a.verifyResponse(v) {
-			return false
-		}
-	}
-	sign, _ := base64.StdEncoding.DecodeString(params["sign"])
-	keys := a.paraFilter(params)
-	signStr := a.createLinkString(keys, params)
-	data, err := a.decodeRSAKey(a.config.PublicKey)
-	if err != nil {
-		log(utils.LogLevelError, "alipay公钥解析失败")
-		return false
-	}
-	pubi, err := x509.ParsePKIXPublicKey(data)
-	if err != nil {
-		log(utils.LogLevelError, "alipay结果校验RSA公钥初始化错误:"+err.Error())
-		return false
-	}
-	dt := sha1.Sum([]byte(signStr))
-	err = rsa.VerifyPKCS1v15(pubi.(*rsa.PublicKey), crypto.SHA1, dt[:], sign)
-	if err != nil {
-		log(utils.LogLevelError, "alipay结果校验失败:"+err.Error())
-		return false
-	}
-	return true
+	//if v, ok := params["notify_id"]; ok {
+	//	if !a.verifyResponse(v) {
+	//		return false
+	//	}
+	//}
+	sign := params["sign"]
+	delete(params, "sign_type")
+	keys := paraFilter(params)
+	signStr := createLinkString(keys, params)
+	return verify(signStr, sign, a.config.PublicKey)
 }
 
 //获取远程服务器ATN结果,验证返回URL

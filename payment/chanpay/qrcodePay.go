@@ -22,12 +22,8 @@ type qrcodePay struct {
 
 //支付,返回支付代码
 func (q *qrcodePay) Pay(req *payment.PayRequest) (string, error) {
-	if req.Ext == nil {
+	if req.Ext == "" {
 		req.Ext = "ALIPAY"
-	} else {
-		if v, ok := req.Ext.(string); !ok || v == "" {
-			req.Ext = "ALIPAY"
-		}
 	}
 	req.No = encodeNo(req.No)
 	t := time.Now()
@@ -41,7 +37,7 @@ func (q *qrcodePay) Pay(req *payment.PayRequest) (string, error) {
 		"OutTradeNo":     req.No,
 		"MchId":          q.config.MchID,
 		"TradeType":      "11",
-		"BankCode":       req.Ext.(string),
+		"BankCode":       req.Ext,
 		"TradeAmount":    fmt.Sprintf("%.2f", req.Money),
 		"GoodsName":      req.Desc,
 		"Subject":        req.Desc,

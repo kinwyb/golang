@@ -38,3 +38,24 @@ func DriverQuick(fun payment.RegDriverFun, logger utils.Logger) {
 		log(utils.LogLevelInfo, "畅捷快捷支付驱动注入......[成功]")
 	}
 }
+
+func DriverBank(fun payment.RegDriverFun, logger utils.Logger) {
+	lg = logger
+	err := fun(&bankPay{})
+	if err != nil {
+		log(utils.LogLevelError, "畅捷银行网关支付驱动注入......[失败]:%s", err.Error())
+	} else {
+		log(utils.LogLevelInfo, "畅捷银行网关支付驱动注入......[成功]")
+	}
+}
+
+//WithdrawDriver 提现驱动
+func WithdrawDriver(fun payment.RegWithdrawDriverFun, logger utils.Logger) {
+	lg = logger
+	err := fun(&chanpayWithdraw{})
+	if err != nil {
+		log(utils.LogLevelError, "畅捷提现驱动注入......[失败]:%s", err.Error())
+	} else {
+		log(utils.LogLevelInfo, "畅捷提现驱动注入......[成功]")
+	}
+}

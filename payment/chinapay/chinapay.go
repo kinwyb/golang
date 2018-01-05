@@ -56,17 +56,17 @@ func (c *chinapay) Pay(req *payment.PayRequest) (string, error) {
 //异步结果通知处理,返回支付结果
 func (c *chinapay) Notify(params map[string]string) *payment.PayResult {
 	ret := &payment.PayResult{
-		PayCode: c.Code(),
-		Navite:  params,
+		PayCode:      c.Code(),
+		Navite:       params,
+		TradeNo:      params["MerOrderNo"],
+		No:           params["MerResv"],
+		ThirdTradeNo: params["AcqSeqId"],
 	}
 	if !c.verify(params) {
 		ret.Succ = false
 		ret.ErrMsg = "签名验证失败"
 		return ret
 	}
-	ret.TradeNo = params["MerOrderNo"]
-	ret.No = params["MerResv"]
-	ret.ThirdTradeNo = params["AcqSeqId"]
 	status := params["OrderStatus"]
 	if status == "0000" {
 		ret.Succ = true

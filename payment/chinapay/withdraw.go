@@ -152,6 +152,7 @@ func (w *withdraw) Withdraw(info *payment.WithdrawInfo) *payment.WithdrawResult 
 				WithdrawCode: w.Code(),
 				WithdrawName: w.Name(),
 				Status:       payment.FAIL, //提现状态
+				FailCode:     result["stat"],
 			}
 		}
 	}

@@ -45,6 +45,8 @@ func (w *wxpay) Pay(req *payment.PayRequest) (string, error) {
 	resp.Body.Close()
 	if err != nil {
 		return "", errors.New("微信请求失败:" + err.Error())
+	} else if req.IsApp {
+		return string(data), nil //app支付无需处理直接返回结果
 	}
 	return w.decodeResp(data)
 }
@@ -62,6 +64,10 @@ func (w *wxpay) Notify(params map[string]string) *payment.PayResult {
 		return ret
 	}
 	ret.Navite = args
+	ret.No = args["attach"]
+	ret.TradeNo = args["out_trade_no"]
+	ret.ThirdAccount = args["openid"]
+	ret.ThirdTradeNo = args["transaction_id"]
 	if args["return_code"] != "SUCCESS" || args["result_code"] != "SUCCESS" {
 		ret.Succ = false
 		ret.ErrMsg = "微信支付失败:" + args["return_msg"] + ":" + args["err_code_des"]
@@ -81,10 +87,6 @@ func (w *wxpay) Notify(params map[string]string) *payment.PayResult {
 		return ret
 	}
 	ret.Succ = true
-	ret.No = args["attach"]
-	ret.TradeNo = args["out_trade_no"]
-	ret.ThirdAccount = args["openid"]
-	ret.ThirdTradeNo = args["transaction_id"]
 	ret.Money = money / 100
 	return ret
 }
@@ -141,12 +143,14 @@ func (w *wxpay) decodeResp(data []byte) (string, error) {
 	if wxRes["sign"] != signSrc {
 		return "", errors.New("微信签名验证失败")
 	}
-	img, err := QRCode(wxRes["code_url"], 150)
-	if err != nil {
-		log(utils.LogLevelError, "二维码创建失败:%s", err.Error())
-		return wxRes["code_url"], nil
-	}
-	return img, nil
+	return wxRes["code_url"], nil
+	//编码成二维码图片返回
+	//img, err := QRCode(wxRes["code_url"], 150)
+	//if err != nil {
+	//	log(utils.LogLevelError, "二维码创建失败:%s", err.Error())
+	//	return wxRes["code_url"], nil
+	//}
+	//return img, nil
 }
 
 //无需确认支付

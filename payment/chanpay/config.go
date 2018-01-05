@@ -37,3 +37,30 @@ type QuickPayRequestExt struct {
 	CardExprDt   string //有效期[当是信用卡时必填]
 	CardCvn2     string //cvv2码[信用卡时必填]
 }
+
+type BankPayConfig struct {
+	payment.Config
+	PartnerID   string //签约合作方的唯一用户号
+	MchID       string //商户标识id
+	PrivateKey  []byte //私钥
+	PublicKey   []byte //公钥
+	ExpiredTime string //交易有效时间,取值范围：1m～48h。单位为分，如1.5h，可转换为90m。如果超过该有效期进行确认则提示订单已超时。不允许确认
+	NotifyURL   string //结果通知地址
+}
+
+//银联网关支付扩展数据
+type BankPayRequestExt struct {
+	BizType     string `description:"业务类型 01：B2C 个人网银 02：B2B 企业网银"`
+	ChannelType string `description:"请求渠道 01:WAP、02:WEB"`
+	BankCode    string `description:"银行编码"`
+}
+
+//提现配置信息
+type WithdrawConfig struct {
+	payment.Config
+	PartnerID  string //签约合作方的唯一用户号
+	MchID      string //商户标识id
+	PrivateKey []byte //签名私钥
+	PublicKey  []byte //验签公钥
+	NotifyURL  string //结果通知地址
+}

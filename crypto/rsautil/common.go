@@ -25,19 +25,9 @@ func bin2hex(bindata string) string {
 	return hex.EncodeToString([]byte(bindata))
 }
 
-func hex2bin(hexdata string) string {
-	ret, _ := hex.DecodeString(hexdata)
-	return string(ret)
-}
-
 func bin2int(bindata string) *big.Int {
 	bindata = bin2hex(bindata)
 	return bchexdec(bindata)
-}
-
-func pow(i *big.Int, e *big.Int) *big.Int {
-	ret := big.NewInt(0)
-	return ret.Exp(i, e, nil)
 }
 
 func bcpowmod(num *big.Int, pw *big.Int, mod *big.Int) *big.Int {
@@ -49,7 +39,7 @@ func bcpowmod(num *big.Int, pw *big.Int, mod *big.Int) *big.Int {
 			ret = ret.Mul(ret, num)
 			ret = ret.Mod(ret, mod)
 		}
-		num = num.Mod(pow(num, two), mod)
+		num = num.Exp(num, two, mod)
 		pw = pw.Quo(pw, two)
 		if pw.Int64() == 0 {
 			break

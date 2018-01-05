@@ -1,6 +1,12 @@
 package alipay
 
-import "github.com/kinwyb/golang/payment"
+import (
+	"bytes"
+
+	"fmt"
+
+	"github.com/kinwyb/golang/payment"
+)
 
 //PayConfig 支付配置信息
 type PayConfig struct {
@@ -56,4 +62,63 @@ type withdrawAPIRequest struct {
 	Amount   string `json:"amount"`          //转账金额
 	RealName string `json:"payee_real_name"` //收款方真实姓名
 	Remark   string `json:"remark"`          //转账备注
+}
+
+//app支付返回结果
+type appPayReturn struct {
+	Result []byte `json:"result"`       //处理结果
+	Status string `json:"resultStatus"` //结果码
+	Memo   string `json:"memo"`         //描述信息
+}
+
+//app支付结果
+type appPayResult struct {
+	Response *appPayResponse `json:"alipay_trade_app_pay_response"`
+	Sign     string          `json:"sign"`
+	SignType string          `json:"sign_type"`
+}
+
+type appPayResponse struct {
+	Code        string  `json:"code"`         //结果码
+	Msg         string  `json:"msg"`          //处理结果的描述
+	AppID       string  `json:"app_id"`       //支付宝分配给开发者的应用Id
+	OutTradeNo  string  `json:"out_trade_no"` //商户网站唯一订单号
+	TradeNo     string  `json:"trade_no"`     //该交易在支付宝系统中的交易流水号
+	TotalAmount float64 `json:"total_amount"` //该笔订单的资金总额
+	SellerID    string  `json:"seller_id"`    //收款支付宝账号对应的支付宝唯一用户号
+	Charset     string  `json:"charset"`      //编码格式
+	Timestamp   string  `json:"timestamp"`    //时间
+}
+
+func (a *appPayResponse) Xml() string {
+	buf := bytes.NewBufferString("<xml>")
+	buf.WriteString("<code>")
+	buf.WriteString(a.Code)
+	buf.WriteString("</code>")
+	buf.WriteString("<msg>")
+	buf.WriteString(a.Msg)
+	buf.WriteString("</msg>")
+	buf.WriteString("<app_id>")
+	buf.WriteString(a.AppID)
+	buf.WriteString("</app_id>")
+	buf.WriteString("<out_trade_no>")
+	buf.WriteString(a.OutTradeNo)
+	buf.WriteString("</out_trade_no>")
+	buf.WriteString("<trade_no>")
+	buf.WriteString(a.TradeNo)
+	buf.WriteString("</trade_no>")
+	buf.WriteString("<total_amount>")
+	buf.WriteString(fmt.Sprintf("%.2f", a.TotalAmount))
+	buf.WriteString("</total_amount>")
+	buf.WriteString("<seller_id>")
+	buf.WriteString(a.SellerID)
+	buf.WriteString("</seller_id>")
+	buf.WriteString("<charset>")
+	buf.WriteString(a.Charset)
+	buf.WriteString("</charset>")
+	buf.WriteString("<timestamp>")
+	buf.WriteString(a.Timestamp)
+	buf.WriteString("</timestamp>")
+	buf.WriteString("</xml>")
+	return buf.String()
 }

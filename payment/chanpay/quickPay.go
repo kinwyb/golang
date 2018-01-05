@@ -23,12 +23,11 @@ type quickPay struct {
 func (q *quickPay) Pay(req *payment.PayRequest) (string, error) {
 	if req.MemberID == "" {
 		return "", errors.New("用户唯一标识[MemberID]不能为空")
-	} else if req.Ext == nil {
-		return "", errors.New("支付扩展信息[Ext]不能为空,而且必须为*QuickPayRequestExt")
+	} else if req.Ext == "" {
+		req.Ext = "{}"
 	}
-	jsondata, _ := json.Marshal(req.Ext)
 	ext := &QuickPayRequestExt{}
-	err := json.Unmarshal(jsondata, &ext)
+	err := json.Unmarshal([]byte(req.Ext), &ext)
 	if err != nil {
 		return "", errors.New("支付扩展信息[Ext]解析错误:" + err.Error())
 	} else if ext.BkAcctNo == "" {
@@ -72,14 +71,10 @@ func (q *quickPay) Pay(req *payment.PayRequest) (string, error) {
 		CardExprDt, _ := rsautil.Encrypt(q.config.PublicKey, []byte(ext.CardExprDt))
 		params["CardExprDt"] = base64.StdEncoding.EncodeToString(CardExprDt)
 	}
-	BkAcctNo, _ := rsautil.Encrypt(q.config.PublicKey, []byte(ext.BkAcctNo))
-	params["BkAcctNo"] = base64.StdEncoding.EncodeToString(BkAcctNo)
-	IDNo, _ := rsautil.Encrypt(q.config.PublicKey, []byte(ext.IDNo))
-	params["IDNo"] = base64.StdEncoding.EncodeToString(IDNo)
-	CstmrNm, _ := rsautil.Encrypt(q.config.PublicKey, []byte(ext.CstmrNm))
-	params["CstmrNm"] = base64.StdEncoding.EncodeToString(CstmrNm)
-	MobNo, _ := rsautil.Encrypt(q.config.PublicKey, []byte(ext.MobNo))
-	params["MobNo"] = base64.StdEncoding.EncodeToString(MobNo)
+	params["BkAcctNo"] = encrypt(q.config.PublicKey, ext.BkAcctNo)
+	params["IDNo"] = encrypt(q.config.PublicKey, ext.IDNo)
+	params["CstmrNm"] = encrypt(q.config.PublicKey, ext.CstmrNm)
+	params["MobNo"] = encrypt(q.config.PublicKey, ext.MobNo)
 	result, err := request(q.apiURL, params, q.config.PrivateKey, q.config.PublicKey)
 	if err != nil {
 		return "", err

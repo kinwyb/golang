@@ -5,7 +5,6 @@ package payment
 
 import (
 	"bytes"
-	"encoding/json"
 	"errors"
 	"fmt"
 
@@ -783,6 +782,11 @@ func (j *PayRequest) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 	fflib.WriteJsonString(buf, string(j.Desc))
 	buf.WriteString(`,"Money":`)
 	fflib.AppendFloat(buf, float64(j.Money), 'g', -1, 64)
+	if j.IsApp {
+		buf.WriteString(`,"IsApp":true`)
+	} else {
+		buf.WriteString(`,"IsApp":false`)
+	}
 	buf.WriteString(`,"PayCode":`)
 	fflib.WriteJsonString(buf, string(j.PayCode))
 	buf.WriteString(`,"IP":`)
@@ -790,11 +794,7 @@ func (j *PayRequest) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 	buf.WriteString(`,"MemberID":`)
 	fflib.WriteJsonString(buf, string(j.MemberID))
 	buf.WriteString(`,"Ext":`)
-	/* Interface types must use runtime reflection. type=interface {} kind=interface */
-	err = buf.Encode(j.Ext)
-	if err != nil {
-		return err
-	}
+	fflib.WriteJsonString(buf, string(j.Ext))
 	buf.WriteByte('}')
 	return nil
 }
@@ -808,6 +808,8 @@ const (
 	ffjtPayRequestDesc
 
 	ffjtPayRequestMoney
+
+	ffjtPayRequestIsApp
 
 	ffjtPayRequestPayCode
 
@@ -823,6 +825,8 @@ var ffjKeyPayRequestNo = []byte("No")
 var ffjKeyPayRequestDesc = []byte("Desc")
 
 var ffjKeyPayRequestMoney = []byte("Money")
+
+var ffjKeyPayRequestIsApp = []byte("IsApp")
 
 var ffjKeyPayRequestPayCode = []byte("PayCode")
 
@@ -911,7 +915,12 @@ mainparse:
 
 				case 'I':
 
-					if bytes.Equal(ffjKeyPayRequestIP, kn) {
+					if bytes.Equal(ffjKeyPayRequestIsApp, kn) {
+						currentKey = ffjtPayRequestIsApp
+						state = fflib.FFParse_want_colon
+						goto mainparse
+
+					} else if bytes.Equal(ffjKeyPayRequestIP, kn) {
 						currentKey = ffjtPayRequestIP
 						state = fflib.FFParse_want_colon
 						goto mainparse
@@ -972,6 +981,12 @@ mainparse:
 					goto mainparse
 				}
 
+				if fflib.EqualFoldRight(ffjKeyPayRequestIsApp, kn) {
+					currentKey = ffjtPayRequestIsApp
+					state = fflib.FFParse_want_colon
+					goto mainparse
+				}
+
 				if fflib.SimpleLetterEqualFold(ffjKeyPayRequestMoney, kn) {
 					currentKey = ffjtPayRequestMoney
 					state = fflib.FFParse_want_colon
@@ -1015,6 +1030,9 @@ mainparse:
 
 				case ffjtPayRequestMoney:
 					goto handle_Money
+
+				case ffjtPayRequestIsApp:
+					goto handle_IsApp
 
 				case ffjtPayRequestPayCode:
 					goto handle_PayCode
@@ -1124,6 +1142,41 @@ handle_Money:
 	state = fflib.FFParse_after_value
 	goto mainparse
 
+handle_IsApp:
+
+	/* handler: j.IsApp type=bool kind=bool quoted=false*/
+
+	{
+		if tok != fflib.FFTok_bool && tok != fflib.FFTok_null {
+			return fs.WrapErr(fmt.Errorf("cannot unmarshal %s into Go value for bool", tok))
+		}
+	}
+
+	{
+		if tok == fflib.FFTok_null {
+
+		} else {
+			tmpb := fs.Output.Bytes()
+
+			if bytes.Compare([]byte{'t', 'r', 'u', 'e'}, tmpb) == 0 {
+
+				j.IsApp = true
+
+			} else if bytes.Compare([]byte{'f', 'a', 'l', 's', 'e'}, tmpb) == 0 {
+
+				j.IsApp = false
+
+			} else {
+				err = errors.New("unexpected bytes for true/false value")
+				return fs.WrapErr(err)
+			}
+
+		}
+	}
+
+	state = fflib.FFParse_after_value
+	goto mainparse
+
 handle_PayCode:
 
 	/* handler: j.PayCode type=string kind=string quoted=false*/
@@ -1204,18 +1257,24 @@ handle_MemberID:
 
 handle_Ext:
 
-	/* handler: j.Ext type=interface {} kind=interface quoted=false*/
+	/* handler: j.Ext type=string kind=string quoted=false*/
 
 	{
-		/* Falling back. type=interface {} kind=interface */
-		tbuf, err := fs.CaptureField(tok)
-		if err != nil {
-			return fs.WrapErr(err)
+
+		{
+			if tok != fflib.FFTok_string && tok != fflib.FFTok_null {
+				return fs.WrapErr(fmt.Errorf("cannot unmarshal %s into Go value for string", tok))
+			}
 		}
 
-		err = json.Unmarshal(tbuf, &j.Ext)
-		if err != nil {
-			return fs.WrapErr(err)
+		if tok == fflib.FFTok_null {
+
+		} else {
+
+			outBuf := fs.Output.Bytes()
+
+			j.Ext = string(string(outBuf))
+
 		}
 	}
 

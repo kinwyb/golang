@@ -104,27 +104,27 @@ func request(apiURL string, params map[string]string, privateKey []byte, publicK
 	}
 	resp, err := http.Post(apiURL, "application/x-www-form-urlencoded", strings.NewReader(buildRequestQueryString(params)))
 	if err != nil {
-		return nil, errors.New("畅捷支付请求失败:" + err.Error())
+		return nil, errors.New("畅捷接口请求失败:" + err.Error())
 	}
 	data, err := ioutil.ReadAll(resp.Body)
 	resp.Body.Close()
 	if err != nil {
-		return nil, errors.New("畅捷支付请求失败:" + err.Error())
+		return nil, errors.New("畅捷接口请求失败:" + err.Error())
 	}
-	log(utils.LogLevelInfo, "畅捷支付请求结果:%s", data)
+	log(utils.LogLevelInfo, "畅捷接口请求结果:%s", data)
 	result := map[string]string{}
 	err = json.Unmarshal(data, &result)
 	if err != nil {
-		log(utils.LogLevelInfo, "畅捷支付结果解析失败:%s", data)
-		return nil, errors.New("畅捷支付结果解析失败")
+		log(utils.LogLevelInfo, "畅捷接口结果解析失败:%s", data)
+		return nil, errors.New("畅捷接口结果解析失败")
 	}
 	if !verify(result, publicKey) {
-		log(utils.LogLevelWarn, "畅捷支付返回结果验签失败")
+		log(utils.LogLevelWarn, "畅捷接口返回结果验签失败")
 	} else if result["AcceptStatus"] == "S" && (result["RetCode"] == "SYSTEM_SUCCESS" || result["RetCode"] == "S001" || result["RetCode"] == "P0002") {
 		return result, nil
 	}
-	log(utils.LogLevelError, "畅捷支付请求失败:%s[%s]%s", result["AcceptStatus"], result["RetCode"], result["RetMsg"])
-	return nil, errors.New("畅捷支付请求失败:[" + result["RetCode"] + "]" + result["RetMsg"])
+	log(utils.LogLevelError, "畅捷接口请求失败:%s[%s]%s", result["AcceptStatus"], result["RetCode"], result["RetMsg"])
+	return result, errors.New("畅捷接口请求失败:[" + result["RetCode"] + "]" + result["RetMsg"])
 }
 
 //编码订单号
@@ -147,4 +147,10 @@ func decodeNo(no string) string {
 		return no[1 : len(no)-9]
 	}
 	return no
+}
+
+//加密字符串
+func encrypt(publicKey []byte, data string) string {
+	endata, _ := rsautil.Encrypt(publicKey, []byte(data))
+	return base64.StdEncoding.EncodeToString(endata)
 }

@@ -72,13 +72,14 @@ type WithdrawQueryResult struct {
 
 //PayRequest 支付请求
 type PayRequest struct {
-	No       string      `description:"交易单号"`
-	Desc     string      `description:"交易描述"`
-	Money    float64     `description:"交易金额"`
-	PayCode  string      `description:"支付方式"`
-	IP       string      `description:"交易发起端IP"`
-	MemberID string      `description:"商户网站用户唯一标识[部分支付方式必填]"`
-	Ext      interface{} `description:"支付方式扩展内容[部分支付方式需填写]"`
+	No       string  `description:"交易单号"`
+	Desc     string  `description:"交易描述"`
+	Money    float64 `description:"交易金额"`
+	IsApp    bool    `description:"是否是APP支付"`
+	PayCode  string  `description:"支付方式"`
+	IP       string  `description:"交易发起端IP"`
+	MemberID string  `description:"商户网站用户唯一标识[部分支付方式必填]"`
+	Ext      string  `description:"支付方式扩展内容[部分支付方式需填写,json字符串]"`
 }
 
 //PayConfirmRequest 支付确认请求参数

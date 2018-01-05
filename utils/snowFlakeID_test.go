@@ -43,5 +43,4 @@ func Test_SnowFlakeID(t *testing.T) {
 		w.Wait()
 		convey.So(count, convey.ShouldEqual, 0)
 	})
-
 }
