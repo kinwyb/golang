@@ -2,26 +2,8 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="038eb0cb-a125-48d4-bd70-4303ea03213c" name="Default" comment="">
-      <change beforePath="" afterPath="$PROJECT_DIR$/payment/alipay/common.go" />
-      <change beforePath="" afterPath="$PROJECT_DIR$/payment/chanpay/bankPay.go" />
-      <change beforePath="" afterPath="$PROJECT_DIR$/payment/chanpay/withdraw.go" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change beforePath="$PROJECT_DIR$/crypto/rsautil/common.go" afterPath="$PROJECT_DIR$/crypto/rsautil/common.go" />
       <change beforePath="$PROJECT_DIR$/payment/alipay/alipay.go" afterPath="$PROJECT_DIR$/payment/alipay/alipay.go" />
-      <change beforePath="$PROJECT_DIR$/payment/alipay/config.go" afterPath="$PROJECT_DIR$/payment/alipay/config.go" />
-      <change beforePath="$PROJECT_DIR$/payment/alipay/config_ffjson.go" afterPath="" />
-      <change beforePath="$PROJECT_DIR$/payment/alipay/withdraw.go" afterPath="$PROJECT_DIR$/payment/alipay/withdraw.go" />
-      <change beforePath="$PROJECT_DIR$/payment/beans.go" afterPath="$PROJECT_DIR$/payment/beans.go" />
-      <change beforePath="$PROJECT_DIR$/payment/beans_ffjson.go" afterPath="" />
-      <change beforePath="$PROJECT_DIR$/payment/chanpay/common.go" afterPath="$PROJECT_DIR$/payment/chanpay/common.go" />
-      <change beforePath="$PROJECT_DIR$/payment/chanpay/config.go" afterPath="$PROJECT_DIR$/payment/chanpay/config.go" />
-      <change beforePath="$PROJECT_DIR$/payment/chanpay/init.go" afterPath="$PROJECT_DIR$/payment/chanpay/init.go" />
-      <change beforePath="$PROJECT_DIR$/payment/chanpay/qrcodePay.go" afterPath="$PROJECT_DIR$/payment/chanpay/qrcodePay.go" />
-      <change beforePath="$PROJECT_DIR$/payment/chanpay/quickPay.go" afterPath="$PROJECT_DIR$/payment/chanpay/quickPay.go" />
-      <change beforePath="$PROJECT_DIR$/payment/chinapay/chinapay.go" afterPath="$PROJECT_DIR$/payment/chinapay/chinapay.go" />
-      <change beforePath="$PROJECT_DIR$/payment/chinapay/withdraw.go" afterPath="$PROJECT_DIR$/payment/chinapay/withdraw.go" />
-      <change beforePath="$PROJECT_DIR$/payment/wxpay/wxpay.go" afterPath="$PROJECT_DIR$/payment/wxpay/wxpay.go" />
-      <change beforePath="$PROJECT_DIR$/utils/snowFlakeID_test.go" afterPath="$PROJECT_DIR$/utils/snowFlakeID_test.go" />
     </list>
     <ignored path="$PROJECT_DIR$/out/" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -32,53 +14,7 @@
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
   <component name="FileEditorManager">
-    <leaf>
-      <file leaf-file-name="alipay.go" pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/payment/alipay/alipay.go">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-155">
-              <caret line="32" column="49" lean-forward="false" selection-start-line="32" selection-start-column="49" selection-end-line="32" selection-end-column="49" />
-              <folding>
-                <element signature="n#!!block;n#verifyResponse#0" expanded="false" />
-                <element signature="n#!!block;n#PayConfirm#0" expanded="false" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="withdraw.go" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/payment/alipay/withdraw.go">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="139">
-              <caret line="38" column="25" lean-forward="false" selection-start-line="38" selection-start-column="25" selection-end-line="38" selection-end-column="25" />
-              <folding>
-                <element signature="n#!!block;n#GetWithdraw#0" expanded="false" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="common.go" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/payment/alipay/common.go">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="76">
-              <caret line="157" column="5" lean-forward="false" selection-start-line="157" selection-start-column="5" selection-end-line="157" selection-end-column="5" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="withdraw_test.go" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/payment/alipay/withdraw_test.go">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="0">
-              <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-    </leaf>
+    <leaf SIDE_TABS_SIZE_LIMIT_KEY="300" />
   </component>
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
@@ -135,7 +71,6 @@
         <option value="$PROJECT_DIR$/payment/chanpay/qrcodePay.go" />
         <option value="$PROJECT_DIR$/payment/chanpay/quickPay.go" />
         <option value="$PROJECT_DIR$/payment/chanpay/common.go" />
-        <option value="$PROJECT_DIR$/payment/chinapay/withdraw.go" />
         <option value="$PROJECT_DIR$/payment/beans.go" />
         <option value="$PROJECT_DIR$/payment/chanpay/config.go" />
         <option value="$PROJECT_DIR$/payment/chanpay/withdraw.go" />
@@ -148,6 +83,7 @@
         <option value="$PROJECT_DIR$/payment/alipay/common.go" />
         <option value="$PROJECT_DIR$/payment/alipay/withdraw.go" />
         <option value="$PROJECT_DIR$/payment/alipay/alipay.go" />
+        <option value="$PROJECT_DIR$/payment/chinapay/withdraw.go" />
       </list>
     </option>
   </component>
@@ -180,6 +116,7 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
+      <pane id="Scope" />
       <pane id="Scratches" />
       <pane id="ProjectPane">
         <subPane>
@@ -188,22 +125,10 @@
               <item name="golang工具库" type="b2602c69:ProjectViewProjectNode" />
               <item name="golang" type="462c0819:PsiDirectoryNode" />
             </path>
-            <path>
-              <item name="golang工具库" type="b2602c69:ProjectViewProjectNode" />
-              <item name="golang" type="462c0819:PsiDirectoryNode" />
-              <item name="payment" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="golang工具库" type="b2602c69:ProjectViewProjectNode" />
-              <item name="golang" type="462c0819:PsiDirectoryNode" />
-              <item name="payment" type="462c0819:PsiDirectoryNode" />
-              <item name="alipay" type="462c0819:PsiDirectoryNode" />
-            </path>
           </expand>
           <select />
         </subPane>
       </pane>
-      <pane id="Scope" />
       <pane id="PackagesPane" />
       <pane id="AndroidView" />
     </panes>
@@ -418,17 +343,25 @@
   <component name="TimeTrackingManager">
     <option name="totallyTimeSpent" value="47057000" />
   </component>
+  <component name="TodoView">
+    <todo-panel id="selected-file">
+      <is-autoscroll-to-source value="true" />
+    </todo-panel>
+    <todo-panel id="all">
+      <are-packages-shown value="true" />
+      <is-autoscroll-to-source value="true" />
+    </todo-panel>
+  </component>
   <component name="ToolWindowManager">
     <frame x="0" y="0" width="1680" height="1050" extended-state="0" />
-    <editor active="true" />
     <layout>
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.21245421" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Project" active="true" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.21978022" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Docker" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
       <window_info id="Database" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32958034" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
-      <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.32958034" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
+      <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32958034" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.24969475" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.29785055" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.39918116" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
@@ -448,7 +381,7 @@
       <window_info id="Image Layers" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Capture Analysis" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Inspection" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
-      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.32958034" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
+      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32958034" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Theme Preview" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
     </layout>
   </component>
@@ -661,7 +594,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="210">
           <caret line="182" column="8" lean-forward="false" selection-start-line="182" selection-start-column="8" selection-end-line="182" selection-end-column="8" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -683,20 +615,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="-382">
           <caret line="99" column="5" lean-forward="false" selection-start-line="99" selection-start-column="5" selection-end-line="99" selection-end-column="5" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/payment/chinapay/withdraw.go">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="523">
-          <caret line="307" column="14" lean-forward="true" selection-start-line="279" selection-start-column="4" selection-end-line="307" selection-end-column="14" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/payment/chanpay/config.go">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="380">
-          <caret line="60" column="13" lean-forward="false" selection-start-line="60" selection-start-column="4" selection-end-line="60" selection-end-column="13" />
         </state>
       </provider>
     </entry>
@@ -748,7 +666,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="388">
           <caret line="94" column="14" lean-forward="false" selection-start-line="83" selection-start-column="4" selection-end-line="94" selection-end-column="14" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -766,7 +683,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
           <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -774,9 +690,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="668">
           <caret line="89" column="27" lean-forward="false" selection-start-line="89" selection-start-column="27" selection-end-line="89" selection-end-column="27" />
-          <folding>
-            <element signature="n#!!block;n#GetPayment#0" expanded="false" />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -784,23 +697,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="257">
           <caret line="60" column="38" lean-forward="false" selection-start-line="60" selection-start-column="38" selection-end-line="60" selection-end-column="38" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/payment/chanpay/qrcodePay.go">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1100">
-          <caret line="115" column="5" lean-forward="true" selection-start-line="115" selection-start-column="5" selection-end-line="115" selection-end-column="5" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/payment/chanpay/quickPay.go">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-23">
-          <caret line="80" column="5" lean-forward="true" selection-start-line="77" selection-start-column="4" selection-end-line="80" selection-end-column="5" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -808,12 +704,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="-832">
           <caret line="40" column="47" lean-forward="false" selection-start-line="40" selection-start-column="40" selection-end-line="40" selection-end-column="47" />
-          <folding>
-            <element signature="n#!!block;n#NotifyResult#0" expanded="false" />
-            <element signature="n#!!block;n#Result#0" expanded="false" />
-            <element signature="n#!!block;n#Driver#0" expanded="false" />
-            <element signature="n#!!block;n#PayConfirm#0" expanded="false" />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -821,36 +711,63 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
           <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/payment/alipay/withdraw.go">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="139">
+        <state relative-caret-position="513">
           <caret line="38" column="25" lean-forward="false" selection-start-line="38" selection-start-column="25" selection-end-line="38" selection-end-column="25" />
-          <folding>
-            <element signature="n#!!block;n#GetWithdraw#0" expanded="false" />
-          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/payment/chinapay/withdraw.go">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="726">
+          <caret line="270" column="66" lean-forward="false" selection-start-line="270" selection-start-column="66" selection-end-line="270" selection-end-column="66" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/payment/alipay/common.go">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="76">
-          <caret line="157" column="5" lean-forward="false" selection-start-line="157" selection-start-column="5" selection-end-line="157" selection-end-column="5" />
+        <state relative-caret-position="1501">
+          <caret line="102" column="33" lean-forward="false" selection-start-line="102" selection-start-column="33" selection-end-line="102" selection-end-column="33" />
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/payment/alipay/alipay.go">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-155">
+        <state relative-caret-position="-1155">
           <caret line="32" column="49" lean-forward="false" selection-start-line="32" selection-start-column="49" selection-end-line="32" selection-end-column="49" />
           <folding>
             <element signature="n#!!block;n#verifyResponse#0" expanded="false" />
             <element signature="n#!!block;n#PayConfirm#0" expanded="false" />
           </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/payment/chanpay/quickPay.go">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-298">
+          <caret line="80" column="5" lean-forward="true" selection-start-line="77" selection-start-column="4" selection-end-line="80" selection-end-column="5" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/payment/chanpay/config.go">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1140">
+          <caret line="60" column="13" lean-forward="false" selection-start-line="60" selection-start-column="4" selection-end-line="60" selection-end-column="13" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/payment/chanpay/qrcodePay.go">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1929">
+          <caret line="115" column="5" lean-forward="true" selection-start-line="115" selection-start-column="5" selection-end-line="115" selection-end-column="5" />
+          <folding />
         </state>
       </provider>
     </entry>

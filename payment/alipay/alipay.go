@@ -97,6 +97,7 @@ func (a *alipay) Result(params map[string]string) *payment.PayResult {
 		ThirdTradeNo: params["trade_no"],     //支付宝交易号
 		Succ:         true,
 	}
+	result.Money,_ = strconv.ParseFloat(params["total_amount"],64)
 	if !a.verify(params) {
 		result.Succ = false
 		result.ErrMsg = "支付宝回调数据验证失败"
